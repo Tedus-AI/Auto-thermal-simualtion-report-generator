@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>熱流模擬報告自動化生成器 | Delta</title>
+
+  <!-- CDN Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    /* ── Reset & Variables ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:      #005BAA;
+      --blue-dark: #003D7A;
+      --blue-pale: #EBF3FB;
+      --green:     #27AE60;
+      --orange:    #E67E22;
+      --red:       #E74C3C;
+      --gray-100:  #F5F7FA;
+      --gray-200:  #E8ECF2;
+      --gray-400:  #B0BAC9;
+      --gray-600:  #6B7A99;
+      --gray-800:  #2C3E50;
+      --white:     #FFFFFF;
+      --border:    #DDE3EC;
+      --font:      -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--gray-100);
+      color: var(--gray-800);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── App Header ── */
+    .app-header {
+      background: var(--blue);
+      color: var(--white);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: var(--shadow-md);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .app-logo {
+      font-size: 22px;
+      font-weight: 900;
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,.15);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .app-header h1 { font-size: 17px; font-weight: 700; line-height: 1.3; }
+    .app-header .sub { font-size: 11px; opacity: .7; margin-top: 1px; }
+
+    /* ── Tab Navigation ── */
+    .tab-nav {
+      background: var(--white);
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      padding: 0 24px;
+      gap: 4px;
+      position: sticky;
+      top: 68px;
+      z-index: 90;
+    }
+    .tab-btn {
+      padding: 11px 18px;
+      border: none;
+      background: none;
+      font-size: 13px;
+      font-family: var(--font);
+      color: var(--gray-600);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all .15s;
+    }
+    .tab-btn:hover { color: var(--blue); }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+    /* ── Content ── */
+    .tab-content { display: none; padding: 20px 24px; max-width: 1280px; margin: 0 auto; width: 100%; }
+    .tab-content.active { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    /* ── Form Grid ── */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: 1/-1; }
+
+    label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--gray-600);
+    }
+    input[type=text], input[type=number], select, textarea {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: var(--font);
+      color: var(--gray-800);
+      background: var(--white);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(0,91,170,.12);
+    }
+    textarea { resize: vertical; min-height: 60px; }
+
+    /* ── Page Toggles ── */
+    .pages-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 8px;
+    }
+    .page-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .15s;
+      user-select: none;
+    }
+    .page-toggle:hover { background: var(--blue-pale); }
+    .page-toggle input[type=checkbox] { accent-color: var(--blue); width: 15px; height: 15px; cursor: pointer; }
+    .page-toggle .pg-num {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--blue);
+      background: var(--blue-pale);
+      padding: 1px 5px;
+      border-radius: 4px;
+      min-width: 22px;
+      text-align: center;
+    }
+    .page-toggle .pg-name { font-size: 12px; flex: 1; }
+
+    /* ── Image Upload Grid ── */
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin: 14px 0 8px;
+      padding-left: 2px;
+    }
+    .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .img-slot {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      position: relative;
+    }
+    .img-slot:hover, .img-slot.drag-over { border-color: var(--blue); background: var(--blue-pale); }
+    .img-slot.has-image { border-style: solid; border-color: var(--green); }
+    .img-slot input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .img-slot .preview-img { max-width: 100%; max-height: 90px; object-fit: contain; border-radius: 4px; }
+    .img-slot .slot-code {
+      font-size: 10px;
+      font-family: monospace;
+      color: var(--blue);
+      background: var(--blue-pale);
+      padding: 2px 6px;
+      border-radius: 4px;
+      word-break: break-all;
+    }
+    .img-slot .slot-desc { font-size: 11px; color: var(--gray-600); line-height: 1.3; }
+    .img-slot .upload-icon { font-size: 22px; color: var(--gray-400); }
+    .img-slot .clear-btn {
+      position: absolute;
+      top: 4px; right: 4px;
+      background: var(--red);
+      color: var(--white);
+      border: none;
+      border-radius: 50%;
+      width: 18px; height: 18px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      line-height: 1;
+    }
+
+    /* ── CSV Upload Area ── */
+    .csv-drop {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: all .15s;
+    }
+    .csv-drop:hover, .csv-drop.drag-over { border-color: var(--blue); background: var(--blue-pale); }
+    .csv-drop.has-file { border-color: var(--green); background: rgba(39,174,96,.05); }
+    .csv-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .csv-drop .icon { font-size: 32px; margin-bottom: 8px; }
+    .csv-drop p { font-size: 13px; color: var(--gray-600); }
+    .csv-drop .file-name { font-weight: 600; color: var(--green); margin-top: 4px; }
+
+    /* ── Preview Table ── */
+    .results-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .results-table th {
+      background: var(--blue);
+      color: var(--white);
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .results-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+    .results-table tr:nth-child(even) td { background: var(--gray-100); }
+    .results-table tr:hover td { background: var(--blue-pale); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .badge-pass    { background: #d5f0e0; color: #1a6e3c; }
+    .badge-warning { background: #fdeece; color: #7d4e0f; }
+    .badge-fail    { background: #fde0df; color: #8e1a17; }
+    .badge-miss    { background: var(--gray-200); color: var(--gray-600); }
+
+    .val-pass    { color: var(--gray-800); }
+    .val-warning { color: var(--orange); font-weight: 600; }
+    .val-fail    { color: var(--red);    font-weight: 600; }
+
+    /* ── QC Report ── */
+    .qc-box {
+      background: #1e2a38;
+      color: #a8c4e0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-top: 12px;
+    }
+    .qc-ok   { color: #5adb8a; }
+    .qc-warn { color: #ffc94a; }
+    .qc-err  { color: #ff6b6b; }
+
+    /* ── Generate Section ── */
+    .generate-bar {
+      position: sticky;
+      bottom: 0;
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      z-index: 80;
+      box-shadow: 0 -4px 12px rgba(0,0,0,.06);
+    }
+    .btn-primary {
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      padding: 11px 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background .15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--blue-dark); }
+    .btn-primary:disabled { background: var(--gray-400); cursor: not-allowed; }
+    .btn-secondary {
+      background: var(--white);
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-secondary:hover { background: var(--blue-pale); }
+    .status-msg { font-size: 12px; color: var(--gray-600); flex: 1; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: var(--white);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Alerts ── */
+    .alert { padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 10px; }
+    .alert-info    { background: #dbedf9; color: #0a4d7a; border: 1px solid #aad5f5; }
+    .alert-success { background: #d5f0e0; color: #1a6e3c; border: 1px solid #9cdcb9; }
+    .alert-warning { background: #fdeece; color: #7d4e0f; border: 1px solid #f9d78e; }
+
+    /* ── Misc ── */
+    .empty-msg { text-align: center; color: var(--gray-400); font-size: 13px; padding: 32px 0; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    .stat-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .stat-chip {
+      background: var(--gray-100);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+    }
+    .stat-chip strong { color: var(--blue); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     App Header
+══════════════════════════════════════════════ -->
+<header class="app-header">
+  <div class="app-logo">△</div>
+  <div>
+    <h1>熱流模擬報告自動化生成器</h1>
+    <div class="sub">Thermal Simulation Report Generator — Phase 1 MVP &nbsp;|&nbsp; Delta AMSBD</div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════
+     Tab Navigation
+══════════════════════════════════════════════ -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('config')">⚙️ 專案設定</button>
+  <button class="tab-btn" onclick="switchTab('images')">🖼 截圖上傳</button>
+  <button class="tab-btn" onclick="switchTab('data')">📊 數據 &amp; 預覽</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     TAB 1 — Project Config
+══════════════════════════════════════════════ -->
+<div id="tab-config" class="tab-content active">
+
+  <!-- Basic Info -->
+  <div class="card">
+    <div class="card-title">📋 報告基本資訊</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>報告標題 (Project Name)</label>
+        <input type="text" id="cfg_project_name" placeholder="StarkCore Sub6 outdoor thermal simulation (12L)" />
+      </div>
+      <div class="form-group">
+        <label>作者 (Author)</label>
+        <input type="text" id="cfg_author" placeholder="Tedus.chen | AMSBD" />
+      </div>
+      <div class="form-group">
+        <label>日期 (Date)</label>
+        <input type="text" id="cfg_date" placeholder="02/12/2026" />
+      </div>
+      <div class="form-group">
+        <label>客戶 (Customer)</label>
+        <input type="text" id="cfg_customer" placeholder="（可空白）" />
+      </div>
+      <div class="form-group">
+        <label>備注 (Note)</label>
+        <input type="text" id="cfg_note" placeholder="（可空白）" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Boundary Conditions -->
+  <div class="card">
+    <div class="card-title">🌡️ 邊界條件 (Boundary Conditions)</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>對流方式 (Flow Type)</label>
+        <input type="text" id="cfg_flow_type" placeholder="Natural Convection (Fanless)" />
+      </div>
+      <div class="form-group">
+        <label>環境溫度 (Ambient Temp, °C)</label>
+        <input type="number" id="cfg_ambient_temp_c" placeholder="45" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>外部風速 (External Velocity)</label>
+        <input type="text" id="cfg_external_velocity" placeholder="0 m/s" />
+      </div>
+      <div class="form-group">
+        <label>安裝方式 (Installation)</label>
+        <input type="text" id="cfg_installation" placeholder="Pole mount" />
+      </div>
+      <div class="form-group">
+        <label>產品尺寸 L×W×H (mm)</label>
+        <input type="text" id="cfg_product_size_mm" placeholder="339 x 272 x 130" />
+      </div>
+      <div class="form-group">
+        <label>體積 (Product Volume, L)</label>
+        <input type="number" id="cfg_product_volume_l" placeholder="11.98" step="0.01" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Power Overview -->
+  <div class="card">
+    <div class="card-title">⚡ 功耗概覽 (Power Dissipation Overview)</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Digital Board Pd (W)</label>
+        <input type="number" id="cfg_digital_pd_w" placeholder="17.5" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>Power Module Pd (W)</label>
+        <input type="number" id="cfg_pwr_pd_w" placeholder="10.0" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>RF Board Pd (W)</label>
+        <input type="number" id="cfg_rf_pd_w" placeholder="26.8" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>Total Pd (W)</label>
+        <input type="number" id="cfg_total_pd_w" placeholder="54.3" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>TDD 比例 (TDD Ratio)</label>
+        <input type="text" id="cfg_tdd_ratio" placeholder="75%" />
+      </div>
+      <div class="form-group">
+        <label>Backoff 設定 (Backoff)</label>
+        <input type="text" id="cfg_backoff_db" placeholder="1dB" />
+      </div>
+      <div class="form-group full">
+        <label>功耗條件標注 (Pd Condition，留空自動產生)</label>
+        <input type="text" id="cfg_pd_condition" placeholder="自動從環溫/TDD/Backoff 組合，或手動填入" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Toggles -->
+  <div class="card">
+    <div class="card-title">📄 頁面開關（勾選的頁面才會輸出至 PPTX）</div>
+    <div class="pages-grid" id="pages-grid">
+      <!-- generated by JS -->
+    </div>
+  </div>
+
+</div><!-- /tab-config -->
+
+<!-- ══════════════════════════════════════════════
+     TAB 2 — Image Upload
+══════════════════════════════════════════════ -->
+<div id="tab-images" class="tab-content">
+
+  <div class="card">
+    <div class="card-title">🖼 截圖上傳</div>
+    <div class="alert alert-info">
+      📌 依 <strong>嚴格命名規則</strong> 上傳截圖，程式依此自動對應至 PPT 的圖框位置。
+      若圖片未上傳，PPTX 中該位置將顯示灰色佔位圖並標示 [IMAGE MISSING]。
+    </div>
+    <div id="img-upload-area"><!-- generated by JS --></div>
+  </div>
+
+</div><!-- /tab-images -->
+
+<!-- ══════════════════════════════════════════════
+     TAB 3 — Data & Preview
+══════════════════════════════════════════════ -->
+<div id="tab-data" class="tab-content">
+
+  <!-- CSV Upload -->
+  <div class="card">
+    <div class="card-title">📂 FloTHERM 數據匯入</div>
+    <div class="alert alert-info">
+      請匯出 FloTHERM Query Export CSV，必要欄位：<code>Object Name</code>、
+      <code>Hottest Junction Temperature (°C)</code>、<code>Case Temperature (°C)</code>
+    </div>
+
+    <div class="csv-drop" id="csv-drop">
+      <input type="file" id="csv-file" accept=".csv,.xlsx" />
+      <div class="icon">📄</div>
+      <p>點擊或拖拉 <strong>flotherm_result.csv</strong> 至此處</p>
+      <p>支援 .csv 格式</p>
+      <div class="file-name" id="csv-filename"></div>
+    </div>
+
+    <button class="btn-secondary" style="margin-top:10px" onclick="clearCSV()">清除 CSV</button>
+    &nbsp;
+    <button class="btn-secondary" onclick="loadSampleData()">載入範例數據（測試用）</button>
+  </div>
+
+  <!-- Match Results -->
+  <div class="card">
+    <div class="card-title">🔍 元件比對結果預覽</div>
+    <div class="stat-row" id="stat-row"></div>
+    <div id="preview-area">
+      <div class="empty-msg">請先上傳 FloTHERM CSV，或載入範例數據</div>
+    </div>
+  </div>
+
+  <!-- QC Report -->
+  <div class="card" id="qc-card" style="display:none">
+    <div class="card-title">📋 QC 報告預覽</div>
+    <div class="qc-box" id="qc-box"></div>
+  </div>
+
+</div><!-- /tab-data -->
+
+<!-- ══════════════════════════════════════════════
+     Generate Bar
+══════════════════════════════════════════════ -->
+<div class="generate-bar">
+  <button class="btn-primary" id="btn-generate" onclick="generatePPTX()">
+    <span>📊 生成 PPTX 報告</span>
+  </button>
+  <button class="btn-secondary" onclick="runQC()">⚡ 執行 QC 檢查</button>
+  <div class="status-msg" id="status-msg">就緒。請填寫設定、上傳截圖，並匯入 FloTHERM CSV 後生成報告。</div>
+</div>
+
+<!-- Load spec_db.js before main script -->
+<script src="spec_db.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   State
+═══════════════════════════════════════════════════════════════ */
+let uploadedImages  = {};   // key -> base64 data URL
+let flothermRows    = [];   // raw parsed CSV rows
+let matchResults    = [];   // processed match results
+
+/* ═══════════════════════════════════════════════════════════════
+   Page Definitions
+═══════════════════════════════════════════════════════════════ */
+const PAGE_DEFS = [
+  { key: 'cover',              num: 1,  name: '封面 (Cover)' },
+  { key: 'boundary_conditions',num: 2,  name: 'Boundary Conditions' },
+  { key: 'power_overview',     num: 3,  name: 'Power Dissipation Overview' },
+  { key: 'digital_placement',  num: 4,  name: 'IC Placement – Digital/B & PWR/B' },
+  { key: 'rf_placement',       num: 5,  name: 'IC Placement – RF/B' },
+  { key: 'rf_coin_detail',     num: 6,  name: 'IC Placement – GTRB Coin Detail' },
+  { key: 'rf_sim_result',      num: 7,  name: 'Simulation Result – RF/B' },
+  { key: 'rf_pcb_temp',        num: 8,  name: 'RF PCB Temperature' },
+  { key: 'rf_air_temp',        num: 9,  name: 'Air Temp near RF/B' },
+  { key: 'digital_sim_result', num: 10, name: 'Simulation Result – Digital/B' },
+  { key: 'digital_air_temp',   num: 11, name: 'Air Temp near Digital/B' },
+  { key: 'pwr_sim_result',     num: 12, name: 'Simulation Result – PWR/B' },
+  { key: 'temp_dist_frontback',num: 13, name: 'Temperature Distribution (Front/Rear)' },
+  { key: 'temp_dist_side',     num: 14, name: 'Temperature Distribution (Side)' },
+  { key: 'rear_hsk',           num: 15, name: 'Temperature Distribution – Rear HSK' },
+  { key: 'closing',            num: 16, name: '結尾頁 (Closing)' },
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   Image Slot Definitions
+═══════════════════════════════════════════════════════════════ */
+const IMG_SLOTS = [
+  // Cover
+  { section: '封面 / Cover',            key: 'cover_3d',           desc: '產品 3D 外觀圖' },
+  // Boundary Conditions
+  { section: 'Boundary Conditions',     key: 'dim_3d',             desc: '3D 爆炸圖' },
+  { section: null,                      key: 'dim_front',          desc: '正面尺寸視圖' },
+  { section: null,                      key: 'dim_side',           desc: '側面尺寸視圖' },
+  // IC Placement
+  { section: 'IC Placement',            key: 'dig_placement',      desc: 'Digital/B PCB 佈局' },
+  { section: null,                      key: 'pwr_placement',      desc: 'PWR/B PCB 佈局' },
+  { section: null,                      key: 'rf_placement_top',   desc: 'RF/B PCB Top 佈局' },
+  { section: null,                      key: 'rf_placement_bot',   desc: 'RF/B PCB Bottom 佈局' },
+  { section: null,                      key: 'rf_coin_detail',     desc: 'Coin 尺寸 & Stack 示意' },
+  // RF Simulation
+  { section: 'RF/B Simulation',         key: 'rf_sim_result',      desc: 'RF 元件溫度標注圖' },
+  { section: null,                      key: 'circulator_dist',    desc: 'Circulator 溫度分佈' },
+  { section: null,                      key: 'rf_pcb_temp',        desc: 'RF PCB 溫度雲圖' },
+  { section: null,                      key: 'rf_section_pos',     desc: 'RF 截面位置示意圖' },
+  { section: null,                      key: 'rf_air_temp',        desc: 'RF 空氣溫度截面圖' },
+  // Digital Simulation
+  { section: 'Digital/B Simulation',    key: 'dig_sim_result',     desc: 'Digital/B 溫度標注圖' },
+  { section: null,                      key: 'dig_pcb_temp',       desc: 'Digital PCB 溫度雲圖' },
+  { section: null,                      key: 'dig_section_pos',    desc: 'Digital 截面位置示意圖' },
+  { section: null,                      key: 'dig_air_temp',       desc: 'Digital 空氣溫度截面圖' },
+  // PWR Simulation
+  { section: 'PWR/B Simulation',        key: 'pwr_sim_result',     desc: 'PWR/B 溫度標注圖' },
+  { section: null,                      key: 'pwr_thermal_curve',  desc: 'H48SA Thermal Curve' },
+  // Temperature Distribution
+  { section: 'Temperature Distribution',key: 'temp_dist_front',    desc: '整體溫度分佈：正面' },
+  { section: null,                      key: 'temp_dist_rear',     desc: '整體溫度分佈：背面' },
+  { section: null,                      key: 'temp_dist_side1',    desc: '整體溫度分佈：左側面' },
+  { section: null,                      key: 'temp_dist_side2',    desc: '整體溫度分佈：右側面' },
+  { section: null,                      key: 'rear_hsk_inside',    desc: 'Rear HSK 內部視圖' },
+  { section: null,                      key: 'rear_hsk_3d',        desc: 'Rear HSK 3D 視圖' },
+];
+
+/* ═══════════════════════════════════════════════════════════════
+   Init UI
+═══════════════════════════════════════════════════════════════ */
+function initUI() {
+  // Page toggles
+  const grid = document.getElementById('pages-grid');
+  PAGE_DEFS.forEach(p => {
+    const label = document.createElement('label');
+    label.className = 'page-toggle';
+    label.innerHTML = `
+      <input type="checkbox" id="page_${p.key}" ${['cover','closing','rf_sim_result','digital_sim_result','pwr_sim_result'].includes(p.key) ? '' : ''}checked />
+      <span class="pg-num">${p.num}</span>
+      <span class="pg-name">${p.name}</span>
+    `;
+    // Check all by default
+    label.querySelector('input').checked = true;
+    grid.appendChild(label);
+  });
+
+  // Image slots
+  const area = document.getElementById('img-upload-area');
+  let currentSection = null;
+  IMG_SLOTS.forEach(slot => {
+    if (slot.section && slot.section !== currentSection) {
+      currentSection = slot.section;
+      const hdr = document.createElement('div');
+      hdr.className = 'section-label';
+      hdr.textContent = slot.section;
+      area.appendChild(hdr);
+      const grid = document.createElement('div');
+      grid.className = 'img-grid';
+      grid.id = `ig_${currentSection.replace(/[^a-z]/gi, '_')}`;
+      area.appendChild(grid);
+    }
+    const parent = area.querySelector('.img-grid:last-of-type');
+    const div = document.createElement('div');
+    div.className = 'img-slot';
+    div.id = `slot_${slot.key}`;
+    div.innerHTML = `
+      <input type="file" accept="image/*" data-key="${slot.key}" onchange="handleImageUpload(event)" />
+      <span class="upload-icon">🖼</span>
+      <span class="slot-code">${slot.key}</span>
+      <span class="slot-desc">${slot.desc}</span>
+    `;
+    // drag events
+    div.addEventListener('dragover', e => { e.preventDefault(); div.classList.add('drag-over'); });
+    div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+    div.addEventListener('drop', e => {
+      e.preventDefault();
+      div.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) processImageFile(slot.key, file);
+    });
+    parent.appendChild(div);
+  });
+
+  // CSV drop zone drag events
+  const csvDrop = document.getElementById('csv-drop');
+  csvDrop.addEventListener('dragover', e => { e.preventDefault(); csvDrop.classList.add('drag-over'); });
+  csvDrop.addEventListener('dragleave', () => csvDrop.classList.remove('drag-over'));
+  csvDrop.addEventListener('drop', e => {
+    e.preventDefault();
+    csvDrop.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) processCSVFile(file);
+  });
+  document.getElementById('csv-file').addEventListener('change', e => {
+    if (e.target.files[0]) processCSVFile(e.target.files[0]);
+  });
+
+  // Set today's date as default
+  const today = new Date();
+  document.getElementById('cfg_date').value =
+    `${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}/${today.getFullYear()}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Tab Navigation
+═══════════════════════════════════════════════════════════════ */
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    const keys = ['config','images','data'];
+    b.classList.toggle('active', keys[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Config Helpers
+═══════════════════════════════════════════════════════════════ */
+function getConfig() {
+  const v = id => document.getElementById(id)?.value?.trim() || '';
+  const n = id => parseFloat(document.getElementById(id)?.value) || null;
+  return {
+    project_name:     v('cfg_project_name'),
+    author:           v('cfg_author'),
+    date:             v('cfg_date'),
+    customer:         v('cfg_customer'),
+    note:             v('cfg_note'),
+    flow_type:        v('cfg_flow_type'),
+    ambient_temp_c:   n('cfg_ambient_temp_c'),
+    external_velocity:v('cfg_external_velocity'),
+    installation:     v('cfg_installation'),
+    product_size_mm:  v('cfg_product_size_mm'),
+    product_volume_l: n('cfg_product_volume_l'),
+    digital_pd_w:     n('cfg_digital_pd_w'),
+    pwr_pd_w:         n('cfg_pwr_pd_w'),
+    rf_pd_w:          n('cfg_rf_pd_w'),
+    total_pd_w:       n('cfg_total_pd_w'),
+    tdd_ratio:        v('cfg_tdd_ratio'),
+    backoff_db:       v('cfg_backoff_db'),
+    pd_condition:     v('cfg_pd_condition'),
+  };
+}
+
+function getPageConfig() {
+  const out = {};
+  PAGE_DEFS.forEach(p => {
+    out[p.key] = document.getElementById(`page_${p.key}`)?.checked ?? true;
+  });
+  return out;
+}
+
+function parseSizeMM(str) {
+  // parse "339 x 272 x 130" -> [339, 272, 130]
+  if (!str) return [null, null, null];
+  const nums = str.match(/[\d.]+/g);
+  return [nums?.[0], nums?.[1], nums?.[2]];
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Image Upload
+═══════════════════════════════════════════════════════════════ */
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  const key  = event.target.dataset.key;
+  if (file) processImageFile(key, file);
+}
+
+function processImageFile(key, file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadedImages[key] = e.target.result;
+    renderImageSlot(key, e.target.result);
+    setStatus(`已上傳圖片：${key}`);
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderImageSlot(key, dataURL) {
+  const slot = document.getElementById(`slot_${key}`);
+  if (!slot) return;
+  slot.classList.add('has-image');
+  // Remove old preview
+  slot.querySelectorAll('.preview-img, .clear-btn, .upload-icon').forEach(el => el.remove());
+  const img = document.createElement('img');
+  img.className = 'preview-img';
+  img.src = dataURL;
+  slot.insertBefore(img, slot.querySelector('.slot-code'));
+  const btn = document.createElement('button');
+  btn.className = 'clear-btn';
+  btn.title = '移除圖片';
+  btn.textContent = '✕';
+  btn.onclick = e => { e.preventDefault(); clearImage(key); };
+  slot.appendChild(btn);
+}
+
+function clearImage(key) {
+  delete uploadedImages[key];
+  const slot = document.getElementById(`slot_${key}`);
+  if (!slot) return;
+  slot.classList.remove('has-image');
+  slot.querySelectorAll('.preview-img, .clear-btn').forEach(el => el.remove());
+  const icon = document.createElement('span');
+  icon.className = 'upload-icon';
+  icon.textContent = '🖼';
+  slot.insertBefore(icon, slot.querySelector('.slot-code'));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CSV Parsing
+═══════════════════════════════════════════════════════════════ */
+function processCSVFile(file) {
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete(results) {
+      flothermRows = results.data;
+      document.getElementById('csv-filename').textContent = `✓ ${file.name}  (${flothermRows.length} 行)`;
+      document.getElementById('csv-drop').classList.add('has-file');
+      runMatch();
+      switchTab('data');
+    },
+    error(err) {
+      alert('CSV 解析失敗：' + err.message);
+    }
+  });
+}
+
+function clearCSV() {
+  flothermRows = [];
+  matchResults = [];
+  document.getElementById('csv-filename').textContent = '';
+  document.getElementById('csv-drop').classList.remove('has-file');
+  document.getElementById('csv-file').value = '';
+  renderPreview([]);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Sample Data (for testing)
+═══════════════════════════════════════════════════════════════ */
+function loadSampleData() {
+  const sample = [
+    { 'Object Name': 'GTRB384608-Final-1', 'Hottest Junction Temperature (°C)': '183.74', 'Case Temperature (°C)': '174.98' },
+    { 'Object Name': 'GTRB384608-Final-2', 'Hottest Junction Temperature (°C)': '187.55', 'Case Temperature (°C)': '178.37' },
+    { 'Object Name': 'GTRB384608-Final-3', 'Hottest Junction Temperature (°C)': '185.21', 'Case Temperature (°C)': '176.10' },
+    { 'Object Name': 'GTRB384608-Final-4', 'Hottest Junction Temperature (°C)': '189.40', 'Case Temperature (°C)': '179.88' },
+    { 'Object Name': 'B11G3338N81D-Driver-1', 'Hottest Junction Temperature (°C)': '127.90', 'Case Temperature (°C)': '126.10' },
+    { 'Object Name': 'BTS6201U-PreDriver-1', 'Hottest Junction Temperature (°C)': '119.13', 'Case Temperature (°C)': '117.60' },
+    { 'Object Name': 'Circulator-1',          'Hottest Junction Temperature (°C)': '78.50',  'Case Temperature (°C)': '76.20'  },
+    { 'Object Name': 'FPGA-xczu67dr',         'Hottest Junction Temperature (°C)': '88.32',  'Case Temperature (°C)': '75.44'  },
+    { 'Object Name': 'Si5518-1',              'Hottest Junction Temperature (°C)': '95.10',  'Case Temperature (°C)': '92.30'  },
+    { 'Object Name': 'DDR4-1',               'Hottest Junction Temperature (°C)': '82.44',  'Case Temperature (°C)': '79.11'  },
+    { 'Object Name': 'H48SA50030NRDH-1',     'Hottest Junction Temperature (°C)': '91.20',  'Case Temperature (°C)': '88.90'  },
+  ];
+  flothermRows = sample;
+  document.getElementById('csv-filename').textContent = `✓ [範例數據]  (${sample.length} 行)`;
+  document.getElementById('csv-drop').classList.add('has-file');
+  runMatch();
+  switchTab('data');
+  setStatus('已載入範例數據。');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Component Matching & Margin Calculation
+═══════════════════════════════════════════════════════════════ */
+function runMatch() {
+  matchResults = matchComponents(flothermRows, SPEC_DB_FALLBACK);
+  renderPreview(matchResults);
+}
+
+function matchComponents(csvRows, specDB) {
+  return specDB.map(spec => {
+    const matching = csvRows.filter(row => {
+      const name = (row['Object Name'] || '').toLowerCase();
+      return name.includes(spec.match_key.toLowerCase());
+    });
+
+    const instances = matching.map(row => {
+      const tj = parseFloat(row['Hottest Junction Temperature (°C)'] ?? row['Tj (°C)'] ?? 0);
+      const tc = parseFloat(row['Case Temperature (°C)'] ?? row['Tc (°C)'] ?? 0);
+      const simVal = spec.spec_type === 'Tj' ? tj : tc;
+      const margin = ((spec.spec_value_c - simVal) / spec.spec_value_c) * 100;
+      const status = margin >= 10 ? 'PASS' : margin >= 0 ? 'WARNING' : 'FAIL';
+      return { object_name: row['Object Name'], tj, tc, sim_value: simVal, margin, status };
+    });
+
+    const overallStatus = instances.length === 0 ? 'MISSING'
+      : instances.some(i => i.status === 'FAIL')    ? 'FAIL'
+      : instances.some(i => i.status === 'WARNING') ? 'WARNING'
+      : 'PASS';
+
+    return { ...spec, instances, status: overallStatus };
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Preview Table Render
+═══════════════════════════════════════════════════════════════ */
+function renderPreview(results) {
+  const area  = document.getElementById('preview-area');
+  const stats = document.getElementById('stat-row');
+
+  if (!results || results.length === 0) {
+    area.innerHTML = '<div class="empty-msg">請先上傳 FloTHERM CSV，或載入範例數據</div>';
+    stats.innerHTML = '';
+    return;
+  }
+
+  const pass    = results.filter(r => r.status === 'PASS').length;
+  const warn    = results.filter(r => r.status === 'WARNING').length;
+  const fail    = results.filter(r => r.status === 'FAIL').length;
+  const missing = results.filter(r => r.status === 'MISSING').length;
+  const total   = results.reduce((s, r) => s + r.instances.length, 0);
+
+  stats.innerHTML = `
+    <span class="stat-chip">元件總數 <strong>${results.length}</strong></span>
+    <span class="stat-chip">量測點數 <strong>${total}</strong></span>
+    <span class="stat-chip">✅ Pass <strong>${pass}</strong></span>
+    <span class="stat-chip">⚠️ Warning <strong>${warn}</strong></span>
+    <span class="stat-chip">❌ Fail <strong>${fail}</strong></span>
+    ${missing ? `<span class="stat-chip">🔍 未比對 <strong>${missing}</strong></span>` : ''}
+  `;
+
+  let html = `
+    <div style="overflow-x:auto">
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>板別</th>
+          <th>元件名稱</th>
+          <th>Object Name (FloTHERM)</th>
+          <th>Spec Type</th>
+          <th>Pd/pcs (W)</th>
+          <th>Spec (°C)</th>
+          <th>Sim (°C)</th>
+          <th>Margin (%)</th>
+          <th>狀態</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  results.forEach(spec => {
+    if (spec.instances.length === 0) {
+      html += `<tr>
+        <td>${spec.board_type}</td>
+        <td>${spec.component_display}</td>
+        <td style="color:var(--gray-400)">— 未比對 —</td>
+        <td>${spec.spec_type}</td>
+        <td>${spec.power_w ?? '-'}</td>
+        <td>${spec.spec_value_c}</td>
+        <td>—</td>
+        <td>—</td>
+        <td><span class="badge badge-miss">NOT FOUND</span></td>
+      </tr>`;
+    } else {
+      spec.instances.forEach((inst, idx) => {
+        const cls = inst.status === 'PASS'    ? 'val-pass'
+                  : inst.status === 'WARNING' ? 'val-warning' : 'val-fail';
+        const badge = inst.status === 'PASS'    ? 'badge-pass'
+                    : inst.status === 'WARNING' ? 'badge-warning' : 'badge-fail';
+        html += `<tr>
+          <td>${idx === 0 ? spec.board_type : ''}</td>
+          <td>${idx === 0 ? spec.component_display : ''}</td>
+          <td style="font-family:monospace;font-size:11px">${inst.object_name}</td>
+          <td>${spec.spec_type}</td>
+          <td>${spec.power_w ?? '-'}</td>
+          <td>${spec.spec_value_c}</td>
+          <td class="${cls}">${inst.sim_value.toFixed(2)}</td>
+          <td class="${cls}">${(inst.margin >= 0 ? '+' : '') + inst.margin.toFixed(1)}%</td>
+          <td><span class="badge ${badge}">${inst.status}</span></td>
+        </tr>`;
+      });
+    }
+  });
+
+  html += '</tbody></table></div>';
+  area.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   QC Report
+═══════════════════════════════════════════════════════════════ */
+function runQC() {
+  const config = getConfig();
+  const pages  = getPageConfig();
+  const lines  = [];
+
+  lines.push(`QC 報告 — ${new Date().toLocaleString('zh-TW')}`);
+  lines.push('═'.repeat(50));
+
+  // Config check
+  lines.push('\n【專案設定】');
+  if (!config.project_name) lines.push('  ⚠ project_name 未填寫');
+  else lines.push(`  ✅ project_name: ${config.project_name}`);
+  if (!config.author) lines.push('  ⚠ author 未填寫');
+  else lines.push(`  ✅ author: ${config.author}`);
+
+  // Image check
+  lines.push('\n【截圖上傳狀態】');
+  IMG_SLOTS.forEach(s => {
+    if (uploadedImages[s.key]) lines.push(`  ✅ ${s.key} — ${s.desc}`);
+    else                        lines.push(`  ⚠ ${s.key} 未上傳 — [IMAGE MISSING]`);
+  });
+
+  // Match results
+  lines.push('\n【元件比對結果】');
+  if (matchResults.length === 0) {
+    lines.push('  — 尚未匯入 FloTHERM CSV');
+  } else {
+    matchResults.forEach(spec => {
+      if (spec.instances.length === 0) {
+        lines.push(`  ❌ ${spec.component_display} — 無法比對（FloTHERM 中找不到 "${spec.match_key}"）`);
+      } else {
+        spec.instances.forEach(inst => {
+          const sym = inst.status === 'PASS' ? '✅' : inst.status === 'WARNING' ? '⚠' : '❌';
+          lines.push(`  ${sym} ${inst.object_name} — Sim: ${inst.sim_value.toFixed(1)}°C  Margin: ${inst.margin.toFixed(1)}%  [${inst.status}]`);
+        });
+      }
+    });
+  }
+
+  // Page summary
+  lines.push('\n【頁面輸出清單】');
+  PAGE_DEFS.forEach(p => {
+    lines.push(`  ${pages[p.key] ? '☑' : '☐'} P${p.num}  ${p.name}`);
+  });
+
+  lines.push('\n' + '═'.repeat(50));
+
+  const qcCard = document.getElementById('qc-card');
+  const qcBox  = document.getElementById('qc-box');
+  qcCard.style.display = 'block';
+  qcBox.textContent = lines.join('\n');
+
+  // Colorize
+  qcBox.innerHTML = qcBox.textContent
+    .replace(/✅[^\n]*/g, m => `<span class="qc-ok">${m}</span>`)
+    .replace(/⚠[^\n]*/g,  m => `<span class="qc-warn">${m}</span>`)
+    .replace(/❌[^\n]*/g,  m => `<span class="qc-err">${m}</span>`);
+
+  switchTab('data');
+  setStatus('QC 檢查完成，請查看頁面底部的 QC 報告。');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PPTX Generation
+═══════════════════════════════════════════════════════════════ */
+/* ── Layout Constants ── */
+const L = {
+  W: 13.33, H: 7.5,
+  HDR_H: 1.0,
+  FTR_H: 0.25,
+  get FTR_Y() { return this.H - this.FTR_H; },
+  get CNT_Y() { return this.HDR_H + 0.1; },
+  get CNT_H() { return this.FTR_Y - this.CNT_Y - 0.1; },
+  MX: 0.4,
+  get CW() { return this.W - 2 * this.MX; },
+  // Colors
+  BLUE:      '005BAA',
+  BLUE_DARK: '003D7A',
+  BLUE_PALE: 'EBF3FB',
+  WHITE:     'FFFFFF',
+  GRAY_L:    'F5F7FA',
+  GRAY_M:    'DDE3EC',
+  GRAY_D:    '6B7A99',
+  TEXT:      '2C3E50',
+  PASS:      '27AE60',
+  WARN:      'E67E22',
+  FAIL:      'E74C3C',
+};
+
+let pptx, pageNum;
+
+async function generatePPTX() {
+  const config = getConfig();
+  const pages  = getPageConfig();
+  const btn    = document.getElementById('btn-generate');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 生成中...';
+  setStatus('正在生成 PPTX，請稍候...');
+
+  try {
+    pptx    = new PptxGenJS();
+    pptx.layout = 'LAYOUT_WIDE';
+    pptx.title  = config.project_name || 'Thermal Simulation Report';
+    pptx.author = config.author || '';
+    pageNum = 0;
+
+    if (pages.cover)               addCoverSlide(config);
+    if (pages.boundary_conditions) addBoundarySlide(config);
+    if (pages.power_overview)      addPowerSlide(config);
+    if (pages.digital_placement)   addTwoImageSlide('IC Placement – Digital/B & PWR/B', 'dig_placement', 'pwr_placement');
+    if (pages.rf_placement)        addTwoImageSlide('IC Placement – RF/B', 'rf_placement_top', 'rf_placement_bot');
+    if (pages.rf_coin_detail)      addOneImageSlide('IC Placement – GTRB Coin Detail', 'rf_coin_detail');
+    if (pages.rf_sim_result)       addSimResultSlide('Simulation Result – RF/B', 'RF', 'rf_sim_result', 'circulator_dist');
+    if (pages.rf_pcb_temp)         addOneImageSlide('RF PCB Temperature Distribution', 'rf_pcb_temp');
+    if (pages.rf_air_temp)         addTwoImageSlide('Air Temperature Distribution near RF/B', 'rf_section_pos', 'rf_air_temp');
+    if (pages.digital_sim_result)  addSimResultSlide('Simulation Result – Digital/B', 'Digital', 'dig_sim_result', 'dig_pcb_temp');
+    if (pages.digital_air_temp)    addTwoImageSlide('Air Temperature Distribution near Digital/B', 'dig_section_pos', 'dig_air_temp');
+    if (pages.pwr_sim_result)      addSimResultSlide('Simulation Result – PWR/B', 'PWR', 'pwr_sim_result', 'pwr_thermal_curve');
+    if (pages.temp_dist_frontback) addTwoImageSlide('Temperature Distribution – Front & Rear', 'temp_dist_front', 'temp_dist_rear');
+    if (pages.temp_dist_side)      addTwoImageSlide('Temperature Distribution – Side Views', 'temp_dist_side1', 'temp_dist_side2');
+    if (pages.rear_hsk)            addTwoImageSlide('Temperature Distribution – Rear HSK', 'rear_hsk_inside', 'rear_hsk_3d');
+    if (pages.closing)             addClosingSlide();
+
+    const cfg = getConfig();
+    const dateStr = (cfg.date || new Date().toLocaleDateString('zh-TW')).replace(/\//g, '-');
+    const slug = (cfg.project_name || 'thermal_report')
+      .replace(/[^\w\u4e00-\u9fff]/g, '_').substring(0, 30);
+
+    await pptx.writeFile({ fileName: `${slug}_${dateStr}` });
+    setStatus(`✅ PPTX 已生成並下載：${slug}_${dateStr}.pptx`);
+  } catch (err) {
+    console.error(err);
+    setStatus('❌ 生成失敗：' + err.message);
+    alert('PPTX 生成失敗：' + err.message);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>📊 生成 PPTX 報告</span>';
+}
+
+/* ── Slide Helpers ── */
+function newContentSlide(title) {
+  pageNum++;
+  const slide = pptx.addSlide();
+
+  // Header blue bar
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0, y: 0, w: L.W, h: L.HDR_H,
+    fill: { color: L.BLUE }, line: { color: L.BLUE, pt: 0 }
+  });
+  // Header title
+  slide.addText(title, {
+    x: L.MX, y: 0.1, w: L.W - 1.3, h: L.HDR_H - 0.2,
+    fontSize: 20, bold: true, color: L.WHITE, valign: 'middle', fontFace: 'Arial'
+  });
+  // Page number
+  slide.addText(String(pageNum), {
+    x: L.W - 0.85, y: 0.1, w: 0.7, h: L.HDR_H - 0.2,
+    fontSize: 18, bold: true, color: L.WHITE, align: 'right', valign: 'middle', fontFace: 'Arial'
+  });
+  // Footer
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0, y: L.FTR_Y, w: L.W, h: L.FTR_H,
+    fill: { color: L.GRAY_M }, line: { color: L.GRAY_M, pt: 0 }
+  });
+  // Footer text
+  slide.addText('Confidential | Delta Electronics', {
+    x: L.MX, y: L.FTR_Y, w: L.CW, h: L.FTR_H,
+    fontSize: 8, color: L.GRAY_D, valign: 'middle', fontFace: 'Arial'
+  });
+
+  return slide;
+}
+
+function addImg(slide, key, x, y, w, h) {
+  const data = uploadedImages[key];
+  if (data) {
+    slide.addImage({ data, x, y, w, h, sizing: { type: 'contain', w, h } });
+  } else {
+    slide.addShape(pptx.ShapeType.rect, {
+      x, y, w, h,
+      fill: { color: L.GRAY_L }, line: { color: L.GRAY_M, pt: 1 }
+    });
+    slide.addText(`[IMAGE MISSING]\n${key}`, {
+      x, y, w, h,
+      fontSize: 9, color: L.GRAY_D, align: 'center', valign: 'middle', fontFace: 'Arial'
+    });
+  }
+}
+
+function mkCell(text, isHdr = false, color = null) {
+  const opts = {
+    bold: isHdr,
+    color: color || (isHdr ? L.WHITE : L.TEXT),
+    fontSize: isHdr ? 10 : 10,
+    fontFace: 'Arial',
+    valign: 'middle',
+    margin: [2, 4, 2, 4],
+  };
+  if (isHdr) opts.fill = { color: L.BLUE };
+  return { text: String(text ?? '—'), options: opts };
+}
+
+/* ── Slide Implementations ── */
+function addCoverSlide(cfg) {
+  pageNum++;
+  const slide = pptx.addSlide();
+
+  // Left panel blue
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0, y: 0, w: 5.4, h: L.H,
+    fill: { color: L.BLUE }, line: { color: L.BLUE, pt: 0 }
+  });
+  // Right panel light
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 5.4, y: 0, w: L.W - 5.4, h: L.H,
+    fill: { color: L.GRAY_L }, line: { color: L.GRAY_L, pt: 0 }
+  });
+
+  // Logo placeholder
+  slide.addText('△ DELTA', {
+    x: 0.4, y: 0.3, w: 4.6, h: 0.6,
+    fontSize: 18, bold: true, color: L.WHITE, fontFace: 'Arial'
+  });
+  slide.addText('Electronics', {
+    x: 0.4, y: 0.85, w: 4.6, h: 0.35,
+    fontSize: 11, color: 'AACCEE', fontFace: 'Arial'
+  });
+
+  // Report type
+  slide.addText('Thermal Simulation Analysis Report', {
+    x: 0.4, y: 1.45, w: 4.6, h: 0.38,
+    fontSize: 11, color: 'AACCEE', italic: true, fontFace: 'Arial'
+  });
+
+  // Divider
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0.4, y: 1.9, w: 4.6, h: 0.04,
+    fill: { color: '5599CC' }, line: { color: '5599CC', pt: 0 }
+  });
+
+  // Project name
+  slide.addText(cfg.project_name || '{{project_name}}', {
+    x: 0.4, y: 2.05, w: 4.6, h: 1.6,
+    fontSize: 17, bold: true, color: L.WHITE, fontFace: 'Arial', wrap: true, valign: 'top'
+  });
+
+  // Divider 2
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0.4, y: 3.85, w: 4.6, h: 0.03,
+    fill: { color: '5599CC' }, line: { color: '5599CC', pt: 0 }
+  });
+
+  // Info rows
+  const infos = [
+    ['Author',   cfg.author   || '—'],
+    ['Date',     cfg.date     || '—'],
+    ['Customer', cfg.customer || '—'],
+    ['Note',     cfg.note     || '—'],
+  ];
+  infos.forEach(([lbl, val], i) => {
+    slide.addText(lbl, {
+      x: 0.4, y: 4.0 + i * 0.52, w: 1.2, h: 0.44,
+      fontSize: 9, color: 'AACCEE', bold: true, fontFace: 'Arial', valign: 'middle'
+    });
+    slide.addText(val, {
+      x: 1.65, y: 4.0 + i * 0.52, w: 3.35, h: 0.44,
+      fontSize: 10, color: L.WHITE, fontFace: 'Arial', valign: 'middle'
+    });
+  });
+
+  // Tagline at bottom
+  slide.addText('Smarter. Greener. Together.', {
+    x: 0.4, y: 6.95, w: 4.6, h: 0.35,
+    fontSize: 10, italic: true, color: 'AACCEE', fontFace: 'Arial'
+  });
+
+  // Right: 3D image
+  addImg(slide, 'cover_3d', 5.6, 0.3, 7.5, 6.9);
+}
+
+function addBoundarySlide(cfg) {
+  const slide = newContentSlide('Boundary Conditions');
+  const cy = L.CNT_Y + 0.1;
+
+  // Left: conditions table
+  const rows = [
+    [mkCell('Flow Type', true),        mkCell(cfg.flow_type || '—')],
+    [mkCell('Ambient Temperature', true), mkCell(cfg.ambient_temp_c != null ? `${cfg.ambient_temp_c} °C` : '—')],
+    [mkCell('External Velocity', true), mkCell(cfg.external_velocity || '—')],
+    [mkCell('Installation', true),     mkCell(cfg.installation || '—')],
+    [mkCell('Product Size (L×W×H)', true), mkCell(cfg.product_size_mm ? cfg.product_size_mm + ' mm' : '—')],
+    [mkCell('Product Volume', true),   mkCell(cfg.product_volume_l != null ? `${cfg.product_volume_l} L` : '—')],
+  ];
+  slide.addTable(rows, {
+    x: L.MX, y: cy, w: 4.5, colW: [2.1, 2.4], rowH: 0.48,
+    border: { pt: 1, color: L.GRAY_M },
+    fill: { color: L.WHITE },
+  });
+
+  // Right: 3 images
+  addImg(slide, 'dim_3d',    5.1, cy,       4.2, 3.0);
+  addImg(slide, 'dim_front', 9.5, cy,       1.9, 3.0);
+  addImg(slide, 'dim_side',  11.6, cy,      1.5, 3.0);
+
+  // Size annotation
+  const [sl, sw, sh] = parseSizeMM(cfg.product_size_mm);
+  slide.addText(
+    `L = ${sl ?? '?'} mm    W = ${sw ?? '?'} mm    H = ${sh ?? '?'} mm` +
+    (cfg.product_volume_l ? `    Volume = ${cfg.product_volume_l} L` : ''),
+    {
+      x: L.MX, y: cy + 3.15, w: L.CW, h: 0.4,
+      fontSize: 12, color: L.TEXT, align: 'center', fontFace: 'Arial', bold: true
+    }
+  );
+}
+
+function addPowerSlide(cfg) {
+  const slide = newContentSlide('Power Dissipation Overview');
+  const cy = L.CNT_Y + 0.3;
+
+  const blocks = [
+    { label: 'Digital Board', value: cfg.digital_pd_w, color: L.BLUE },
+    { label: 'Power Module',  value: cfg.pwr_pd_w,     color: '27AE60' },
+    { label: 'RF Board',      value: cfg.rf_pd_w,      color: 'E67E22' },
+  ];
+  const xs = [0.5, 4.6, 8.7];
+  const bw = 3.85;
+
+  blocks.forEach((blk, i) => {
+    // Box
+    slide.addShape(pptx.ShapeType.rect, {
+      x: xs[i], y: cy, w: bw, h: 2.8,
+      fill: { color: blk.color }, line: { color: blk.color, pt: 0 },
+      shadow: { type: 'outer', blur: 6, offset: 3, angle: 45, color: '888888', opacity: 0.25 }
+    });
+    // Value
+    slide.addText(blk.value != null ? String(blk.value) : '?', {
+      x: xs[i], y: cy + 0.5, w: bw, h: 1.4,
+      fontSize: 44, bold: true, color: L.WHITE, align: 'center', fontFace: 'Arial'
+    });
+    // Unit
+    slide.addText('W', {
+      x: xs[i], y: cy + 1.85, w: bw, h: 0.5,
+      fontSize: 20, color: 'CCEEFF', align: 'center', fontFace: 'Arial'
+    });
+    // Label
+    slide.addText(blk.label, {
+      x: xs[i], y: cy + 3.0, w: bw, h: 0.45,
+      fontSize: 13, bold: true, color: L.TEXT, align: 'center', fontFace: 'Arial'
+    });
+  });
+
+  // Total Pd bar
+  const totalY = cy + 3.6;
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0.5, y: totalY, w: 12.0, h: 0.95,
+    fill: { color: L.BLUE_DARK }, line: { color: L.BLUE_DARK, pt: 0 }
+  });
+  slide.addText(`Total Pd = ${cfg.total_pd_w != null ? cfg.total_pd_w : '?'} W`, {
+    x: 0.7, y: totalY, w: 5.5, h: 0.95,
+    fontSize: 20, bold: true, color: L.WHITE, valign: 'middle', fontFace: 'Arial'
+  });
+
+  const condition = cfg.pd_condition ||
+    `@ ${cfg.ambient_temp_c ?? '?'}°C  Backoff ${cfg.backoff_db || '?'}  TDD ${cfg.tdd_ratio || '?'}`;
+  slide.addText(condition, {
+    x: 6.5, y: totalY, w: 5.8, h: 0.95,
+    fontSize: 12, color: 'AACCEE', align: 'right', valign: 'middle', fontFace: 'Arial'
+  });
+}
+
+function addSimResultSlide(title, boardType, imgKey1, imgKey2) {
+  const slide = newContentSlide(title);
+  const cy = L.CNT_Y + 0.1;
+
+  // Build table
+  const filtered = matchResults.filter(r =>
+    r.board_type && r.board_type.toLowerCase() === boardType.toLowerCase()
+  );
+
+  if (filtered.length > 0) {
+    const specTypeLabel = filtered[0]?.spec_type || 'Tj';
+    const headerRow = [
+      mkCell('元件名稱',       true),
+      mkCell('Pd/pcs (W)',     true),
+      mkCell(`Spec ${specTypeLabel} (°C)`, true),
+      mkCell(`Sim ${specTypeLabel} (°C)`,  true),
+      mkCell('Margin (%)',     true),
+    ];
+    const rows = [headerRow];
+
+    filtered.forEach(spec => {
+      if (spec.instances.length > 0) {
+        spec.instances.forEach(inst => {
+          const color = inst.status === 'PASS' ? L.TEXT
+                      : inst.status === 'WARNING' ? L.WARN : L.FAIL;
+          rows.push([
+            mkCell(inst.object_name),
+            mkCell(spec.power_w != null ? spec.power_w.toFixed(1) : '—'),
+            mkCell(spec.spec_value_c),
+            mkCell(inst.sim_value.toFixed(1)),
+            mkCell((inst.margin >= 0 ? '+' : '') + inst.margin.toFixed(1) + '%', false, color),
+          ]);
+        });
+      } else {
+        rows.push([
+          mkCell(spec.component_display),
+          mkCell(spec.power_w != null ? spec.power_w.toFixed(1) : '—'),
+          mkCell(spec.spec_value_c),
+          mkCell('N/A', false, L.GRAY_D),
+          mkCell('Not Found', false, L.GRAY_D),
+        ]);
+      }
+    });
+
+    slide.addTable(rows, {
+      x: L.MX, y: cy, w: 7.6,
+      colW: [3.1, 1.25, 1.35, 1.35, 1.55],
+      rowH: 0.40,
+      border: { pt: 1, color: L.GRAY_M },
+      autoPage: false,
+    });
+
+    // Legend
+    slide.addText('■ Pass (≥10%)   ■ Warning (<10%)   ■ Fail (<0%)', {
+      x: L.MX, y: L.FTR_Y - 0.55, w: 7.6, h: 0.4,
+      fontSize: 9, color: L.GRAY_D, fontFace: 'Arial'
+    });
+  } else {
+    slide.addText('尚未匯入 FloTHERM 數據或無此板別元件', {
+      x: L.MX, y: cy + 1, w: 7.6, h: 0.5,
+      fontSize: 12, color: L.GRAY_D, fontFace: 'Arial', italic: true
+    });
+  }
+
+  // Images on right
+  addImg(slide, imgKey1, 8.15, cy,       5.0, 3.3);
+  addImg(slide, imgKey2, 8.15, cy + 3.5, 5.0, 2.0);
+}
+
+function addTwoImageSlide(title, imgKey1, imgKey2) {
+  const slide = newContentSlide(title);
+  const cy = L.CNT_Y + 0.1;
+  addImg(slide, imgKey1, L.MX,           cy, 6.25, L.CNT_H - 0.3);
+  addImg(slide, imgKey2, L.MX + 6.55,   cy, 6.25, L.CNT_H - 0.3);
+}
+
+function addOneImageSlide(title, imgKey) {
+  const slide = newContentSlide(title);
+  const cy = L.CNT_Y + 0.1;
+  addImg(slide, imgKey, L.MX, cy, L.CW, L.CNT_H - 0.2);
+}
+
+function addClosingSlide() {
+  pageNum++;
+  const slide = pptx.addSlide();
+
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0, y: 0, w: L.W, h: L.H,
+    fill: { color: L.BLUE }, line: { color: L.BLUE, pt: 0 }
+  });
+
+  // Decorative lines
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0, y: 3.2, w: L.W, h: 0.06,
+    fill: { color: '5599CC' }, line: { color: '5599CC', pt: 0 }
+  });
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 0, y: 4.5, w: L.W, h: 0.06,
+    fill: { color: '5599CC' }, line: { color: '5599CC', pt: 0 }
+  });
+
+  slide.addText('△ DELTA', {
+    x: 0, y: 2.4, w: L.W, h: 0.7,
+    fontSize: 30, bold: true, color: L.WHITE, align: 'center', fontFace: 'Arial'
+  });
+
+  slide.addText('Smarter. Greener. Together.', {
+    x: 0, y: 3.35, w: L.W, h: 0.9,
+    fontSize: 22, italic: true, color: 'AACCEE', align: 'center', valign: 'middle', fontFace: 'Arial'
+  });
+
+  slide.addText('Thank You', {
+    x: 0, y: 4.65, w: L.W, h: 0.7,
+    fontSize: 18, color: 'CCDDEE', align: 'center', fontFace: 'Arial'
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Utility
+═══════════════════════════════════════════════════════════════ */
+function setStatus(msg) {
+  document.getElementById('status-msg').textContent = msg;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Init
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', initUI);
+</script>
+</body>
+</html>
