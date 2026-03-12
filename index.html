@@ -724,6 +724,39 @@ function initUI() {
   const today = new Date();
   document.getElementById('cfg_date').value =
     `${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}/${today.getFullYear()}`;
+
+  // Auto-load Delta template backgrounds from assets/
+  preloadBackgrounds();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Background Preloader
+═══════════════════════════════════════════════════════════════ */
+async function preloadBackgrounds() {
+  const bgs = [
+    { key: 'bg_cover',   path: 'assets/slide_cover.png' },
+    { key: 'bg_content', path: 'assets/slide_content.png' },
+    { key: 'bg_closing', path: 'assets/slide_closing.png' },
+  ];
+  let loaded = 0;
+  for (const bg of bgs) {
+    try {
+      const resp = await fetch(bg.path);
+      if (!resp.ok) continue;
+      const blob = await resp.blob();
+      await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          uploadedImages[bg.key] = e.target.result;
+          renderImageSlot(bg.key, e.target.result);
+          loaded++;
+          resolve();
+        };
+        reader.readAsDataURL(blob);
+      });
+    } catch (_) { /* 本機開發或網路問題時靜默失敗 */ }
+  }
+  if (loaded > 0) setStatus(`✅ Delta 底圖已自動載入 (${loaded}/3)。請填寫設定並上傳截圖。`);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1243,18 +1276,16 @@ function addCoverSlide(cfg) {
   const useBg = hasBg('bg_cover');
 
   if (useBg) {
-    // Use uploaded Delta cover background
+    // Use Delta cover background (sky + blue border frame + Delta logo at bottom-right)
     addBg(slide, 'bg_cover');
 
-    // Content inside the blue-bordered white area of the Delta template
-    // Based on the template: "Smarter. Greener. Together." at top-left,
-    // big white area for content, Delta logo at bottom-right
+    // Project title — left portion, on sky background
     slide.addText(cfg.project_name || '{{project_name}}', {
-      x: 0.6, y: 1.5, w: 8.0, h: 1.4,
-      fontSize: 26, bold: true, color: L.TEXT, fontFace: 'Arial', wrap: true, valign: 'top'
+      x: 0.5, y: 1.8, w: 6.8, h: 1.6,
+      fontSize: 24, bold: true, color: '1A3A5C', fontFace: 'Arial', wrap: true, valign: 'top'
     });
 
-    // Info block below title
+    // Info block — left-bottom area
     const infos = [
       ['Author',   cfg.author   || '—'],
       ['Date',     cfg.date     || '—'],
@@ -1262,14 +1293,18 @@ function addCoverSlide(cfg) {
       ['Note',     cfg.note     || '—'],
     ];
     infos.forEach(([lbl, val], i) => {
-      slide.addText(`${lbl}:  ${val}`, {
-        x: 0.6, y: 3.2 + i * 0.42, w: 8.0, h: 0.38,
-        fontSize: 12, color: L.GRAY_D, fontFace: 'Arial', valign: 'middle'
+      slide.addText(`${lbl}:`, {
+        x: 0.5, y: 4.0 + i * 0.44, w: 1.4, h: 0.40,
+        fontSize: 10, color: '5577AA', bold: true, fontFace: 'Arial', valign: 'middle'
+      });
+      slide.addText(val, {
+        x: 1.95, y: 4.0 + i * 0.44, w: 4.8, h: 0.40,
+        fontSize: 10, color: '2C3E50', fontFace: 'Arial', valign: 'middle'
       });
     });
 
-    // 3D product image (right side, inside white area)
-    addImg(slide, 'cover_3d', 6.5, 1.2, 5.8, 4.5);
+    // 3D product image — right side
+    addImg(slide, 'cover_3d', 7.2, 0.5, 5.8, 6.0);
 
   } else {
     // Fallback: draw cover from scratch
