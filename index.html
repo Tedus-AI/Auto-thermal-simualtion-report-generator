@@ -741,7 +741,7 @@ async function preloadBackgrounds() {
   let loaded = 0;
   for (const bg of bgs) {
     try {
-      const resp = await fetch(bg.path);
+      const resp = await fetch(bg.path + '?v=' + Date.now());
       if (!resp.ok) continue;
       const blob = await resp.blob();
       await new Promise(resolve => {
