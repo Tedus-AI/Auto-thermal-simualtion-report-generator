@@ -1276,35 +1276,39 @@ function addCoverSlide(cfg) {
   const useBg = hasBg('bg_cover');
 
   if (useBg) {
-    // Use Delta cover background (sky + blue border frame + Delta logo at bottom-right)
+    // Full-bleed background (sky + blue border frame + Delta logo already baked in)
     addBg(slide, 'bg_cover');
 
-    // Project title — left portion, on sky background
+    // ── Project title — bold black, upper-left ──
     slide.addText(cfg.project_name || '{{project_name}}', {
-      x: 0.5, y: 1.8, w: 6.8, h: 1.6,
-      fontSize: 24, bold: true, color: '1A3A5C', fontFace: 'Arial', wrap: true, valign: 'top'
+      x: 0.55, y: 1.5, w: 8.8, h: 1.5,
+      fontSize: 28, bold: true, color: '111111',
+      fontFace: 'Arial', wrap: true, valign: 'middle'
     });
 
-    // Info block — left-bottom area
-    const infos = [
-      ['Author',   cfg.author   || '—'],
-      ['Date',     cfg.date     || '—'],
-      ['Customer', cfg.customer || '—'],
-      ['Note',     cfg.note     || '—'],
-    ];
-    infos.forEach(([lbl, val], i) => {
-      slide.addText(`${lbl}:`, {
-        x: 0.5, y: 4.0 + i * 0.44, w: 1.4, h: 0.40,
-        fontSize: 10, color: '5577AA', bold: true, fontFace: 'Arial', valign: 'middle'
-      });
-      slide.addText(val, {
-        x: 1.95, y: 4.0 + i * 0.44, w: 4.8, h: 0.40,
-        fontSize: 10, color: '2C3E50', fontFace: 'Arial', valign: 'middle'
-      });
+    // ── Author | Date — bottom-left bold ──
+    const authorParts = [cfg.author, cfg.date].filter(Boolean);
+    const authorLine = authorParts.join('  |  ') || '—';
+    slide.addText(authorLine, {
+      x: 0.55, y: 6.18, w: 7.5, h: 0.48,
+      fontSize: 16, bold: true, color: '111111',
+      fontFace: 'Arial', valign: 'middle'
     });
 
-    // 3D product image — right side
-    addImg(slide, 'cover_3d', 7.2, 0.5, 5.8, 6.0);
+    // ── Note / Customer box — bottom-right gray box ──
+    slide.addText([
+      { text: 'Note:', options: { bold: true } },
+      { text: `  ${cfg.note || ''}` },
+      { text: '\n' },
+      { text: 'Customer :', options: { bold: true } },
+      { text: `  ${cfg.customer || ''}` },
+    ], {
+      x: 8.4, y: 4.85, w: 4.3, h: 0.88,
+      fontSize: 11, color: '111111', fontFace: 'Arial',
+      valign: 'middle',
+      fill: { color: 'E0E0E0' },
+      line: { color: '888888', pt: 0.75 },
+    });
 
   } else {
     // Fallback: draw cover from scratch
