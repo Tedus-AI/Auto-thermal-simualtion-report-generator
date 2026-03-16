@@ -1282,7 +1282,7 @@ function addCoverSlide(cfg) {
     // ── Project title ──
     slide.addText(cfg.project_name || '{{project_name}}', {
       x: 1.02, y: 1.8, w: 11.33, h: 0.83,
-      fontSize: 30, bold: true, color: '111111',
+      fontSize: 30, bold: false, color: '111111',
       fontFace: 'Arial Rounded MT Bold', wrap: true, valign: 'middle'
     });
 
@@ -1291,20 +1291,20 @@ function addCoverSlide(cfg) {
     const authorLine = authorParts.join('  |  ') || '—';
     slide.addText(authorLine, {
       x: 0.9, y: 6.28, w: 6.24, h: 0.24,
-      fontSize: 16, bold: true, color: '111111',
+      fontSize: 18, bold: false, color: '111111',
       fontFace: 'Arial Rounded MT Bold', valign: 'middle'
     });
 
     // ── Note / Customer box — bottom-right ──
     slide.addText([
-      { text: 'Note:', options: { bold: true } },
+      { text: 'Note:', options: { bold: false } },
       { text: `  ${cfg.note || ''}` },
       { text: '\n' },
-      { text: 'Customer :', options: { bold: true } },
+      { text: 'Customer :', options: { bold: false } },
       { text: `  ${cfg.customer || ''}` },
     ], {
       x: 9.08, y: 4.88, w: 3.46, h: 0.64,
-      fontSize: 18, color: '111111', fontFace: 'Arial Rounded MT Bold',
+      fontSize: 16, color: '111111', fontFace: 'Arial Rounded MT Bold',
       valign: 'middle',
       fill: { color: 'E0E0E0' },
       line: { color: '888888', pt: 0.75 },
