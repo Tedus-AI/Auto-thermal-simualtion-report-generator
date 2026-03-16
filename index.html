@@ -621,6 +621,7 @@ const IMG_SLOTS = [
   { section: 'Boundary Conditions',     key: 'dim_3d',             desc: '3D 爆炸圖' },
   { section: null,                      key: 'dim_front',          desc: '正面尺寸視圖' },
   { section: null,                      key: 'dim_side',           desc: '側面尺寸視圖' },
+  { section: null,                      key: 'dim_bottom',         desc: '底面尺寸視圖' },
   // IC Placement
   { section: 'IC Placement',            key: 'dig_placement',      desc: 'Digital/B PCB 佈局' },
   { section: null,                      key: 'pwr_placement',      desc: 'PWR/B PCB 佈局' },
@@ -1191,7 +1192,7 @@ function addBg(slide, bgKey) {
   }
 }
 
-function newContentSlide(title) {
+function newContentSlide(title, skipTitle = false) {
   pageNum++;
   const slide = pptx.addSlide();
   const useBg = hasBg('bg_content');
@@ -1228,9 +1229,8 @@ function newContentSlide(title) {
     });
   }
 
-  // Slide title (always shown, positioned for both modes)
-  if (useBg) {
-    // With background: title at top of content area
+  // Slide title (skipped when caller adds it manually)
+  if (useBg && !skipTitle) {
     slide.addText(title, {
       x: L.MX, y: 0.15, w: L.W - 1.0, h: 0.55,
       fontSize: 18, bold: true, color: L.TEXT, valign: 'middle', fontFace: 'Arial'
@@ -1373,39 +1373,97 @@ function addCoverSlide(cfg) {
 }
 
 function addBoundarySlide(cfg) {
-  const slide = newContentSlide('Boundary Conditions');
-  const cy = L.CNT_Y + 0.1;
+  // skipTitle=true — we add the title manually below with exact spec position/font
+  const slide = newContentSlide('Boundary Conditions / Dimension / Structure', true);
 
-  // Left: conditions table
-  const rows = [
-    [mkCell('Flow Type', true),        mkCell(cfg.flow_type || '—')],
-    [mkCell('Ambient Temperature', true), mkCell(cfg.ambient_temp_c != null ? `${cfg.ambient_temp_c} °C` : '—')],
-    [mkCell('External Velocity', true), mkCell(cfg.external_velocity || '—')],
-    [mkCell('Installation', true),     mkCell(cfg.installation || '—')],
-    [mkCell('Product Size (L×W×H)', true), mkCell(cfg.product_size_mm ? cfg.product_size_mm + ' mm' : '—')],
-    [mkCell('Product Volume', true),   mkCell(cfg.product_volume_l != null ? `${cfg.product_volume_l} L` : '—')],
-  ];
-  slide.addTable(rows, {
-    x: L.MX, y: cy, w: 4.5, colW: [2.1, 2.4], rowH: 0.48,
-    border: { pt: 1, color: L.GRAY_M },
-    fill: { color: L.WHITE },
+  // ── Title ──
+  slide.addText('Boundary Conditions / Dimension / Structure', {
+    x: 0.4444, y: 0.4079, w: 12.4444, h: 0.743,
+    fontSize: 28, bold: false, fontFace: 'Arial Rounded MT Bold',
+    color: L.TEXT, valign: 'middle'
   });
 
-  // Right: 3 images
-  addImg(slide, 'dim_3d',    5.1, cy,       4.2, 3.0);
-  addImg(slide, 'dim_front', 9.5, cy,       1.9, 3.0);
-  addImg(slide, 'dim_side',  11.6, cy,      1.5, 3.0);
+  // ── Bullet lines ──
+  // Box: left=0.5997, top=1.1853, w=11.0, h=1.6627 → 5 lines × 0.3325"
+  const bx = 0.5997, by = 1.1853, bw = 11.0, lineH = 1.6627 / 5;
+  const [dimL, dimW, dimH] = parseSizeMM(cfg.product_size_mm);
+  const temp = cfg.ambient_temp_c != null ? String(cfg.ambient_temp_c) : '?';
+  const vol  = cfg.product_volume_l != null ? String(cfg.product_volume_l) : '?';
+  const flow = cfg.flow_type    || 'Natural Convection ( Fanless )';
+  const inst = cfg.installation || 'Pole mount';
 
-  // Size annotation
-  const [sl, sw, sh] = parseSizeMM(cfg.product_size_mm);
-  slide.addText(
-    `L = ${sl ?? '?'} mm    W = ${sw ?? '?'} mm    H = ${sh ?? '?'} mm` +
-    (cfg.product_volume_l ? `    Volume = ${cfg.product_volume_l} L` : ''),
-    {
-      x: L.MX, y: cy + 3.15, w: L.CW, h: 0.4,
-      fontSize: 12, color: L.TEXT, align: 'center', fontFace: 'Arial', bold: true
-    }
-  );
+  // Helper: blue text run
+  const B = (t, extra = {}) => ({ text: t, options: { fontFace: 'Arial Rounded MT Bold', color: '00B0F0', fontSize: 16, ...extra } });
+  // Ø bullet in Wingdings
+  const BLT = { text: 'Ø ', options: { fontFace: 'Wingdings', color: '00B0F0', fontSize: 16 } };
+
+  // Line 1 — Flow type (fixed blue)
+  slide.addText([BLT, B(`Flow type: ${flow}`)],
+    { x: bx, y: by, w: bw, h: lineH, valign: 'middle' });
+
+  // Line 2 — Ambient Temperature (label blue, value red)
+  slide.addText([BLT, B('Ambient Temperature: '), B(`${temp}°C`, { color: 'FF0000' })],
+    { x: bx, y: by + lineH, w: bw, h: lineH, valign: 'middle' });
+
+  // Line 3 — Installation (fixed blue)
+  slide.addText([BLT, B(`Installation : ${inst}`)],
+    { x: bx, y: by + lineH * 2, w: bw, h: lineH, valign: 'middle' });
+
+  // Line 4 — Product size label (fixed blue)
+  slide.addText([BLT, B('Product size (Unit: mm) :')],
+    { x: bx, y: by + lineH * 3, w: bw, h: lineH, valign: 'middle' });
+
+  // Line 5 — Dimension values (red) + note (dark gray 12pt)
+  slide.addText([
+    BLT,
+    B('      '),
+    B(`${dimL||'?'}(L)*${dimW||'?'}(W)*${dimH||'?'}(H) = ${vol}L `, { color: 'FF0000' }),
+    { text: '(include waterproof structure)', options: { fontFace: 'Arial Rounded MT Bold', color: '404040', fontSize: 12 } }
+  ], { x: bx, y: by + lineH * 4, w: bw, h: lineH, valign: 'middle' });
+
+  // ── Images (variable per project) ──
+  addImg(slide, 'dim_3d',     1.8024,  3.8146, 2.0139, 2.5248);  // 產品3D圖
+  addImg(slide, 'dim_front',  8.4237,  3.4671, 1.6566, 1.9534);  // 正視圖
+  addImg(slide, 'dim_side',  10.5131,  3.5063, 1.4925, 1.852 );  // 側視圖
+  addImg(slide, 'dim_bottom', 8.5365,  5.7917, 1.5694, 0.7974);  // 底視圖
+
+  // ── Product structure labels (fixed text) ──
+  slide.addText('Top case: Cavity Filter', {
+    x: 3.644, y: 3.4195, w: 1.7087, h: 0.5049,
+    fontSize: 10, color: L.TEXT, fontFace: 'Arial', valign: 'middle', wrap: true
+  });
+  slide.addText('Bottom case: Heatsink', {
+    x: 3.6346, y: 6.5384, w: 1.7087, h: 0.3366,
+    fontSize: 10, color: L.TEXT, fontFace: 'Arial', valign: 'middle'
+  });
+
+  // ── Dimension arrows (W horizontal, L vertical, H vertical) ──
+  slide.addShape(pptx.ShapeType.line, {
+    x: 8.5365, y: 3.3227, w: 1.4635, h: 0,
+    line: { color: '555555', pt: 0.5, beginArrowType: 'arrow', endArrowType: 'arrow' }
+  });
+  slide.addShape(pptx.ShapeType.line, {
+    x: 8.3228, y: 3.5063, w: 0, h: 1.852,
+    line: { color: '555555', pt: 0.5, beginArrowType: 'arrow', endArrowType: 'arrow' }
+  });
+  slide.addShape(pptx.ShapeType.line, {
+    x: 8.2019, y: 5.9112, w: 0, h: 0.6778,
+    line: { color: '555555', pt: 0.5, beginArrowType: 'arrow', endArrowType: 'arrow' }
+  });
+
+  // ── Dimension labels (variable per project, dark gray 12pt centered) ──
+  slide.addText(dimW || '—', {
+    x: 8.911,  y: 3.0959, w: 0.7144, h: 0.3029,
+    fontSize: 12, color: '808080', fontFace: 'Arial', align: 'center', valign: 'middle'
+  });
+  slide.addText(dimL || '—', {
+    x: 7.7498, y: 4.349,  w: 0.6739, h: 0.3029,
+    fontSize: 12, color: '808080', fontFace: 'Arial', align: 'center', valign: 'middle'
+  });
+  slide.addText(dimH || '—', {
+    x: 7.622,  y: 6.1478, w: 0.6739, h: 0.3029,
+    fontSize: 12, color: '808080', fontFace: 'Arial', align: 'center', valign: 'middle'
+  });
 }
 
 function addPowerSlide(cfg) {
