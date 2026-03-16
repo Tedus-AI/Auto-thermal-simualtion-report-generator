@@ -1279,23 +1279,23 @@ function addCoverSlide(cfg) {
     // Full-bleed background (sky + blue border frame + Delta logo already baked in)
     addBg(slide, 'bg_cover');
 
-    // ── Project title — bold black, upper-left ──
+    // ── Project title ──
     slide.addText(cfg.project_name || '{{project_name}}', {
-      x: 0.55, y: 1.5, w: 8.8, h: 1.5,
-      fontSize: 28, bold: true, color: '111111',
-      fontFace: 'Arial', wrap: true, valign: 'middle'
+      x: 1.02, y: 1.8, w: 11.33, h: 0.83,
+      fontSize: 30, bold: true, color: '111111',
+      fontFace: 'Arial Rounded MT Bold', wrap: true, valign: 'middle'
     });
 
-    // ── Author | Date — bottom-left bold ──
+    // ── Author | Date — bottom-left ──
     const authorParts = [cfg.author, cfg.date].filter(Boolean);
     const authorLine = authorParts.join('  |  ') || '—';
     slide.addText(authorLine, {
-      x: 0.55, y: 6.18, w: 7.5, h: 0.48,
+      x: 0.9, y: 6.28, w: 6.24, h: 0.24,
       fontSize: 16, bold: true, color: '111111',
-      fontFace: 'Arial', valign: 'middle'
+      fontFace: 'Arial Rounded MT Bold', valign: 'middle'
     });
 
-    // ── Note / Customer box — bottom-right gray box ──
+    // ── Note / Customer box — bottom-right ──
     slide.addText([
       { text: 'Note:', options: { bold: true } },
       { text: `  ${cfg.note || ''}` },
@@ -1303,8 +1303,8 @@ function addCoverSlide(cfg) {
       { text: 'Customer :', options: { bold: true } },
       { text: `  ${cfg.customer || ''}` },
     ], {
-      x: 8.4, y: 4.85, w: 4.3, h: 0.88,
-      fontSize: 11, color: '111111', fontFace: 'Arial',
+      x: 9.08, y: 4.88, w: 3.46, h: 0.64,
+      fontSize: 18, color: '111111', fontFace: 'Arial Rounded MT Bold',
       valign: 'middle',
       fill: { color: 'E0E0E0' },
       line: { color: '888888', pt: 0.75 },
