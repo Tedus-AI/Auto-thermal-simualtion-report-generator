@@ -894,13 +894,29 @@ function handlePasteItems(items) {
 
 // Primary: paste on hidden contenteditable (browser converts Office EMF → image/png automatically)
 document.getElementById('paste-target').addEventListener('paste', e => {
-  e.preventDefault();
+  // Do NOT preventDefault — let the browser insert <img> so EMF/WMF gets converted to PNG
   const items = [...(e.clipboardData?.items || [])];
-  // Clear the contenteditable so it doesn't accumulate content
-  setTimeout(() => { document.getElementById('paste-target').innerHTML = ''; }, 0);
-  if (!handlePasteItems(items) && items.length > 0) {
-    setStatus('⚠️ 剪貼簿中沒有可用的圖片格式，請再試一次。');
-  }
+
+  // First try direct clipboard items (works for normal PNG screenshots)
+  if (handlePasteItems(items)) return;
+
+  // Fallback: wait for browser to render <img> inside contenteditable (needed for Excel/Office EMF)
+  setTimeout(() => {
+    const pt = document.getElementById('paste-target');
+    const img = pt.querySelector('img');
+    if (img && img.src) {
+      if (activeSlotKey) {
+        uploadedImages[activeSlotKey] = img.src;
+        renderImageSlot(activeSlotKey, img.src);
+        setStatus(`✅ 已從剪貼簿貼上圖片至：${activeSlotKey}`);
+      } else {
+        setStatus('⚠️ 請先點選目標圖片框（框會變藍色），再按 Ctrl+V');
+      }
+    } else if (items.length > 0) {
+      setStatus('⚠️ 剪貼簿中沒有可用的圖片格式，請再試一次。');
+    }
+    pt.innerHTML = ''; // clear after reading
+  }, 150);
 });
 
 // Fallback: paste anywhere else on the page
