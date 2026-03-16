@@ -441,7 +441,7 @@
       </div>
       <div class="form-group">
         <label>作者 (Author)</label>
-        <input type="text" id="cfg_author" placeholder="Tedus.chen | AMSBD" />
+        <input type="text" id="cfg_author" placeholder="Tedus.chen | AMSBD" value="Tedus.chen | AMSBD" />
       </div>
       <div class="form-group">
         <label>日期 (Date)</label>
@@ -472,7 +472,7 @@
       </div>
       <div class="form-group">
         <label>外部風速 (External Velocity)</label>
-        <input type="text" id="cfg_external_velocity" placeholder="0 m/s" />
+        <input type="text" id="cfg_external_velocity" placeholder="0 m/s" value="0 m/s" />
       </div>
       <div class="form-group">
         <label>安裝方式 (Installation)</label>
@@ -480,11 +480,18 @@
       </div>
       <div class="form-group">
         <label>產品尺寸 L×W×H (mm)</label>
-        <input type="text" id="cfg_product_size_mm" placeholder="339 x 272 x 130" />
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="number" id="cfg_dim_l" placeholder="L" step="0.1" style="flex:1;min-width:0;" oninput="calcVolume()" />
+          <span style="flex-shrink:0;">×</span>
+          <input type="number" id="cfg_dim_w" placeholder="W" step="0.1" style="flex:1;min-width:0;" oninput="calcVolume()" />
+          <span style="flex-shrink:0;">×</span>
+          <input type="number" id="cfg_dim_h" placeholder="H" step="0.1" style="flex:1;min-width:0;" oninput="calcVolume()" />
+          <span style="flex-shrink:0;font-size:12px;color:#888;">mm</span>
+        </div>
       </div>
       <div class="form-group">
         <label>體積 (Product Volume, L)</label>
-        <input type="number" id="cfg_product_volume_l" placeholder="11.98" step="0.01" />
+        <input type="text" id="cfg_product_volume_l" placeholder="自動計算" readonly style="background:#f0f0f0;cursor:default;" />
       </div>
     </div>
   </div>
@@ -830,8 +837,13 @@ function getConfig() {
     ambient_temp_c:   n('cfg_ambient_temp_c'),
     external_velocity:v('cfg_external_velocity'),
     installation:     v('cfg_installation'),
-    product_size_mm:  v('cfg_product_size_mm'),
-    product_volume_l: n('cfg_product_volume_l'),
+    product_size_mm:  (() => {
+      const l = document.getElementById('cfg_dim_l')?.value?.trim();
+      const w = document.getElementById('cfg_dim_w')?.value?.trim();
+      const h = document.getElementById('cfg_dim_h')?.value?.trim();
+      return (l && w && h) ? `${l} x ${w} x ${h}` : '';
+    })(),
+    product_volume_l: parseFloat(document.getElementById('cfg_product_volume_l')?.value) || null,
     digital_pd_w:     n('cfg_digital_pd_w'),
     pwr_pd_w:         n('cfg_pwr_pd_w'),
     rf_pd_w:          n('cfg_rf_pd_w'),
@@ -848,6 +860,14 @@ function getPageConfig() {
     out[p.key] = document.getElementById(`page_${p.key}`)?.checked ?? true;
   });
   return out;
+}
+
+function calcVolume() {
+  const l = parseFloat(document.getElementById('cfg_dim_l')?.value) || 0;
+  const w = parseFloat(document.getElementById('cfg_dim_w')?.value) || 0;
+  const h = parseFloat(document.getElementById('cfg_dim_h')?.value) || 0;
+  const vol = document.getElementById('cfg_product_volume_l');
+  if (vol) vol.value = (l && w && h) ? (l * w * h / 1000000).toFixed(2) : '';
 }
 
 function parseSizeMM(str) {
@@ -1534,13 +1554,13 @@ function addBoundarySlide(cfg) {
   addImg(slide, 'dim_bottom', 8.5365,  5.7917, 1.5694, 0.7974);  // 底視圖
 
   // ── Product structure labels (fixed text) ──
-  slide.addText('Top case: Cavity Filter', {
+  slide.addText('Top case:\nCavity Filter', {
     x: 3.644, y: 3.4195, w: 1.7087, h: 0.5049,
-    fontSize: 10, color: L.TEXT, fontFace: 'Arial', valign: 'middle', wrap: true
+    fontSize: 10, color: L.TEXT, fontFace: 'Arial Rounded MT Bold', valign: 'middle', wrap: true
   });
   slide.addText('Bottom case: Heatsink', {
     x: 3.6346, y: 6.5384, w: 1.7087, h: 0.3366,
-    fontSize: 10, color: L.TEXT, fontFace: 'Arial', valign: 'middle'
+    fontSize: 10, color: L.TEXT, fontFace: 'Arial Rounded MT Bold', valign: 'middle'
   });
 
   // ── Dimension arrows (W horizontal, L vertical, H vertical) ──
@@ -1553,7 +1573,7 @@ function addBoundarySlide(cfg) {
     line: { color: '555555', pt: 0.5, beginArrowType: 'arrow', endArrowType: 'arrow' }
   });
   slide.addShape(pptx.ShapeType.line, {
-    x: 8.2019, y: 5.9112, w: 0, h: 0.6778,
+    x: 8.3194, y: 5.8333, w: 0, h: 0.7083,
     line: { color: '555555', pt: 0.5, beginArrowType: 'arrow', endArrowType: 'arrow' }
   });
 
@@ -1567,8 +1587,22 @@ function addBoundarySlide(cfg) {
     fontSize: 12, color: '808080', fontFace: 'Arial', align: 'center', valign: 'middle'
   });
   slide.addText(dimH || '—', {
-    x: 7.622,  y: 6.1478, w: 0.6739, h: 0.3029,
+    x: 7.8056, y: 6.0417, w: 0.6806, h: 0.3056,
     fontSize: 12, color: '808080', fontFace: 'Arial', align: 'center', valign: 'middle'
+  });
+
+  // ── Callout curved arrows ──
+  // ID=14: Top case callout (curvedConnector2, group座標)
+  slide.addShape(pptx.ShapeType.curvedConnector2, {
+    x: 3.4382, y: 4.194, w: 1.1112, h: 0.5999,
+    flipH: false, flipV: false,
+    line: { color: '000000', endArrowType: 'triangle' }
+  });
+  // ID=41: Bottom case callout (curvedConnector3, slide座標)
+  slide.addShape(pptx.ShapeType.curvedConnector3, {
+    x: 3.0764, y: 6.1478, w: 0.6817, h: 0.5728,
+    flipH: false, flipV: false,
+    line: { color: '000000', endArrowType: 'triangle' }
   });
 }
 
