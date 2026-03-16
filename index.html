@@ -204,7 +204,24 @@
     }
     .img-slot:hover, .img-slot.drag-over { border-color: var(--blue); background: var(--blue-pale); }
     .img-slot.has-image { border-style: solid; border-color: var(--green); }
-    .img-slot input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .img-slot input[type=file] { display: none; }
+    .file-btn {
+      font-size: 11px;
+      background: var(--blue-pale);
+      color: var(--blue);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+      position: relative;
+      z-index: 5;
+      user-select: none;
+    }
+    .file-btn:hover { background: var(--blue); color: var(--white); border-color: var(--blue); }
     .img-slot .preview-img { max-width: 100%; max-height: 90px; object-fit: contain; border-radius: 4px; }
     .img-slot .slot-code {
       font-size: 10px;
@@ -383,6 +400,11 @@
   </style>
 </head>
 <body>
+
+<!-- Hidden contenteditable — receives paste events so browser converts Office/EMF formats to image/png -->
+<div id="paste-target" contenteditable="true"
+     style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;opacity:0;"
+     aria-hidden="true" tabindex="-1"></div>
 
 <!-- ══════════════════════════════════════════════
      App Header
@@ -697,15 +719,18 @@ function initUI() {
     div.className = 'img-slot';
     div.id = `slot_${slot.key}`;
     div.innerHTML = `
-      <input type="file" accept="image/*" data-key="${slot.key}" onchange="handleImageUpload(event)" />
       <span class="upload-icon">🖼</span>
       <span class="slot-code">${slot.key}</span>
       <span class="slot-desc">${slot.desc}</span>
-      <span class="paste-hint">點選後可 Ctrl+V 貼上</span>
+      <span class="paste-hint">點選此框後可 Ctrl+V 貼上</span>
+      <label class="file-btn">
+        📂 選擇檔案
+        <input type="file" accept="image/*" data-key="${slot.key}" onchange="handleImageUpload(event)" />
+      </label>
     `;
-    // click to activate slot for paste
+    // 點擊框體（非按鈕、非清除鈕）→ 啟動此框為貼上目標
     div.addEventListener('click', e => {
-      if (e.target.classList.contains('clear-btn')) return;
+      if (e.target.classList.contains('clear-btn') || e.target.closest('.file-btn')) return;
       setActiveSlot(slot.key);
     });
     // drag events
@@ -849,19 +874,41 @@ function setActiveSlot(key) {
     const hint = el.querySelector('.paste-hint');
     if (hint) hint.textContent = '✅ 已選取 — 按 Ctrl+V 貼上';
   }
+  // Focus hidden contenteditable so browser converts all clipboard formats (incl. Office EMF→PNG)
+  document.getElementById('paste-target').focus();
 }
 
-document.addEventListener('paste', e => {
-  const imgItem = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
-  if (!imgItem) return;
-  e.preventDefault();
+function handlePasteItems(items) {
+  const imgItem = items.find(i => i.type.startsWith('image/'));
+  if (!imgItem) return false;
   const file = imgItem.getAsFile();
-  if (!file) return;
+  if (!file) return false;
   if (activeSlotKey) {
     processImageFile(activeSlotKey, file);
     setStatus(`✅ 已從剪貼簿貼上圖片至：${activeSlotKey}`);
   } else {
-    setStatus('⚠️ 請先點選要貼上的圖片框，再按 Ctrl+V');
+    setStatus('⚠️ 請先點選目標圖片框（框會變藍色），再按 Ctrl+V');
+  }
+  return true;
+}
+
+// Primary: paste on hidden contenteditable (browser converts Office EMF → image/png automatically)
+document.getElementById('paste-target').addEventListener('paste', e => {
+  e.preventDefault();
+  const items = [...(e.clipboardData?.items || [])];
+  // Clear the contenteditable so it doesn't accumulate content
+  setTimeout(() => { document.getElementById('paste-target').innerHTML = ''; }, 0);
+  if (!handlePasteItems(items) && items.length > 0) {
+    setStatus('⚠️ 剪貼簿中沒有可用的圖片格式，請再試一次。');
+  }
+});
+
+// Fallback: paste anywhere else on the page
+document.addEventListener('paste', e => {
+  if (e.target.id === 'paste-target') return; // already handled above
+  const items = [...(e.clipboardData?.items || [])];
+  if (!handlePasteItems(items) && items.length > 0) {
+    setStatus('⚠️ 請先點選目標圖片框（框會變藍色），再按 Ctrl+V');
   }
 });
 
