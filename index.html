@@ -494,6 +494,45 @@
         <input type="text" id="cfg_product_volume_l" placeholder="自動計算" readonly style="background:#f0f0f0;cursor:default;" />
       </div>
     </div>
+
+    <!-- Exploded View sub-section -->
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200);">
+      <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:8px;">📦 Exploded View 結構規格（第3頁）</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Cavity Filter 尺寸 (CAVITY_SIZE)</label>
+          <input type="text" id="cfg_cavity_size" placeholder="339mm*272mm*42mm" />
+        </div>
+        <div class="form-group">
+          <label>Heat pipe 數量 (HP_COUNT)</label>
+          <input type="text" id="cfg_hp_count" placeholder="2" />
+        </div>
+        <div class="form-group">
+          <label>Digital/B + RF/B 尺寸 (DIGITAL_RF_SIZE)</label>
+          <input type="text" id="cfg_digital_rf_size" placeholder="320mm*256mm" />
+        </div>
+        <div class="form-group">
+          <label>PWR Board 尺寸 (PWR_SIZE)</label>
+          <input type="text" id="cfg_pwr_size" placeholder="130mm*95mm" />
+        </div>
+        <div class="form-group">
+          <label>Base 厚度 (BASE_THICKNESS)</label>
+          <input type="text" id="cfg_base_thickness" placeholder="7mm" />
+        </div>
+        <div class="form-group">
+          <label>Fin 厚度 (FIN_THICKNESS)</label>
+          <input type="text" id="cfg_fin_thickness" placeholder="1.2mm" />
+        </div>
+        <div class="form-group">
+          <label>Fin 高度 + 數量 (FIN_HEIGHT)</label>
+          <input type="text" id="cfg_fin_height" placeholder="61mm(H), 22fin" />
+        </div>
+        <div class="form-group">
+          <label>Fin Pitch (FIN_PITCH)</label>
+          <input type="text" id="cfg_fin_pitch" placeholder="12.8mm" />
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Power Overview -->
@@ -629,20 +668,21 @@ let activeSlotKey   = null; // currently selected slot for Ctrl+V paste
 const PAGE_DEFS = [
   { key: 'cover',              num: 1,  name: '封面 (Cover)' },
   { key: 'boundary_conditions',num: 2,  name: 'Boundary Conditions' },
-  { key: 'power_overview',     num: 3,  name: 'Power Dissipation Overview' },
-  { key: 'digital_placement',  num: 4,  name: 'IC Placement – Digital/B & PWR/B' },
-  { key: 'rf_placement',       num: 5,  name: 'IC Placement – RF/B' },
-  { key: 'rf_coin_detail',     num: 6,  name: 'IC Placement – GTRB Coin Detail' },
-  { key: 'rf_sim_result',      num: 7,  name: 'Simulation Result – RF/B' },
-  { key: 'rf_pcb_temp',        num: 8,  name: 'RF PCB Temperature' },
-  { key: 'rf_air_temp',        num: 9,  name: 'Air Temp near RF/B' },
-  { key: 'digital_sim_result', num: 10, name: 'Simulation Result – Digital/B' },
-  { key: 'digital_air_temp',   num: 11, name: 'Air Temp near Digital/B' },
-  { key: 'pwr_sim_result',     num: 12, name: 'Simulation Result – PWR/B' },
-  { key: 'temp_dist_frontback',num: 13, name: 'Temperature Distribution (Front/Rear)' },
-  { key: 'temp_dist_side',     num: 14, name: 'Temperature Distribution (Side)' },
-  { key: 'rear_hsk',           num: 15, name: 'Temperature Distribution – Rear HSK' },
-  { key: 'closing',            num: 16, name: '結尾頁 (Closing)' },
+  { key: 'exploded_view',      num: 3,  name: 'Exploded View – Structure' },
+  { key: 'power_overview',     num: 4,  name: 'Power Dissipation Overview' },
+  { key: 'digital_placement',  num: 5,  name: 'IC Placement – Digital/B & PWR/B' },
+  { key: 'rf_placement',       num: 6,  name: 'IC Placement – RF/B' },
+  { key: 'rf_coin_detail',     num: 7,  name: 'IC Placement – GTRB Coin Detail' },
+  { key: 'rf_sim_result',      num: 8,  name: 'Simulation Result – RF/B' },
+  { key: 'rf_pcb_temp',        num: 9,  name: 'RF PCB Temperature' },
+  { key: 'rf_air_temp',        num: 10, name: 'Air Temp near RF/B' },
+  { key: 'digital_sim_result', num: 11, name: 'Simulation Result – Digital/B' },
+  { key: 'digital_air_temp',   num: 12, name: 'Air Temp near Digital/B' },
+  { key: 'pwr_sim_result',     num: 13, name: 'Simulation Result – PWR/B' },
+  { key: 'temp_dist_frontback',num: 14, name: 'Temperature Distribution (Front/Rear)' },
+  { key: 'temp_dist_side',     num: 15, name: 'Temperature Distribution (Side)' },
+  { key: 'rear_hsk',           num: 16, name: 'Temperature Distribution – Rear HSK' },
+  { key: 'closing',            num: 17, name: '結尾頁 (Closing)' },
 ];
 
 /* ═══════════════════════════════════════════════════════════════
@@ -653,11 +693,20 @@ const IMG_SLOTS = [
   { section: '投影片背景 (Slide Backgrounds)',  key: 'bg_cover',   desc: '封面背景 PNG（從 PPT 匯出）' },
   { section: null,                              key: 'bg_content', desc: '內頁背景 PNG（從 PPT 匯出）' },
   { section: null,                              key: 'bg_closing', desc: '結尾頁背景 PNG（從 PPT 匯出）' },
-  // Boundary Conditions
-  { section: 'Boundary Conditions',     key: 'dim_3d',             desc: '3D 爆炸圖' },
-  { section: null,                      key: 'dim_front',          desc: '正面尺寸視圖' },
-  { section: null,                      key: 'dim_side',           desc: '側面尺寸視圖' },
-  { section: null,                      key: 'dim_bottom',         desc: '底面尺寸視圖' },
+  // Boundary Conditions — Page 2
+  { section: 'Boundary Conditions (P2 Dimension)',  key: 'dim_3d',             desc: '3D 爆炸圖' },
+  { section: null,                                  key: 'dim_front',          desc: '正面尺寸視圖' },
+  { section: null,                                  key: 'dim_side',           desc: '側面尺寸視圖' },
+  { section: null,                                  key: 'dim_bottom',         desc: '底面尺寸視圖' },
+  // Exploded View — Page 3
+  { section: 'Exploded View (P3 Structure)',        key: 'exp_cavity_filter',        desc: 'Cavity Filter 圖' },
+  { section: null,                                  key: 'exp_hsk_3d_with_board',    desc: 'Rear HSK-3D with Board 圖' },
+  { section: null,                                  key: 'exp_hsk_3d_with_board_sub',desc: 'Rear HSK-3D with Board 下方細節圖' },
+  { section: null,                                  key: 'exp_hsk_3d_with_board_sub2',desc: 'Rear HSK-3D with Board 最下方細節圖' },
+  { section: null,                                  key: 'exp_hsk_3d',               desc: 'Rear HSK-3D 圖' },
+  { section: null,                                  key: 'exp_hsk_top',              desc: 'Rear HSK-Top view 圖' },
+  { section: null,                                  key: 'exp_hsk_3d_sub',           desc: 'Rear HSK-3D 下方細節圖' },
+  { section: null,                                  key: 'exp_hsk_top_sub',          desc: 'Rear HSK-Top view 下方細節圖' },
   // IC Placement
   { section: 'IC Placement',            key: 'dig_placement',      desc: 'Digital/B PCB 佈局' },
   { section: null,                      key: 'pwr_placement',      desc: 'PWR/B PCB 佈局' },
@@ -851,6 +900,15 @@ function getConfig() {
     tdd_ratio:        v('cfg_tdd_ratio'),
     backoff_db:       v('cfg_backoff_db'),
     pd_condition:     v('cfg_pd_condition'),
+    // Exploded View (Page 3)
+    cavity_size:      v('cfg_cavity_size'),
+    hp_count:         v('cfg_hp_count'),
+    digital_rf_size:  v('cfg_digital_rf_size'),
+    pwr_size:         v('cfg_pwr_size'),
+    base_thickness:   v('cfg_base_thickness'),
+    fin_thickness:    v('cfg_fin_thickness'),
+    fin_height:       v('cfg_fin_height'),
+    fin_pitch:        v('cfg_fin_pitch'),
   };
 }
 
@@ -1278,6 +1336,7 @@ async function generatePPTX() {
 
     if (pages.cover)               addCoverSlide(config);
     if (pages.boundary_conditions) addBoundarySlide(config);
+    if (pages.exploded_view)       addExplodedViewSlide(config);
     if (pages.power_overview)      addPowerSlide(config);
     if (pages.digital_placement)   addTwoImageSlide('IC Placement – Digital/B & PWR/B', 'dig_placement', 'pwr_placement');
     if (pages.rf_placement)        addTwoImageSlide('IC Placement – RF/B', 'rf_placement_top', 'rf_placement_bot');
@@ -1602,6 +1661,138 @@ function addBoundarySlide(cfg) {
   slide.addShape('curvedConnector3', {
     x: 3.0764, y: 6.1478, w: 0.6817, h: 0.5728,
     line: { color: '000000', endArrowType: 'triangle', width: 1 }
+  });
+}
+
+function addExplodedViewSlide(cfg) {
+  const slide = newContentSlide('Boundary Conditions / Dimension / Structure', true);
+  const F = 'Arial Rounded MT Bold';
+  const RED = 'FF0000';
+  const BLK = L.TEXT;
+  const BLU = '00B0F0';
+
+  // ── Title ──
+  slide.addText('Boundary Conditions / Dimension / Structure', {
+    x: 0.4444, y: 0.4079, w: 12.4444, h: 0.743,
+    fontSize: 28, fontFace: F, color: BLK, valign: 'middle'
+  });
+
+  // ── "Exploded view:" label ──
+  slide.addText('Exploded view:', {
+    x: 0.2619, y: 0.934, w: 2.1209, h: 0.4039,
+    fontSize: 18, fontFace: F, color: BLU, valign: 'middle'
+  });
+
+  // ── Column labels ──
+  slide.addText('Rear HSK-3D (with Board)', {
+    x: 3.4494, y: 3.4975, w: 2.1638, h: 0.1683,
+    fontSize: 10, fontFace: F, color: BLK, align: 'center', valign: 'middle'
+  });
+  slide.addText('Rear HSK-3D', {
+    x: 6.9606, y: 3.4975, w: 1.7087, h: 0.1683,
+    fontSize: 10, fontFace: F, color: BLK, align: 'center', valign: 'middle'
+  });
+  slide.addText('Rear HSK-Top view', {
+    x: 10.1509, y: 3.4975, w: 1.7087, h: 0.1683,
+    fontSize: 10, fontFace: F, color: BLK, align: 'center', valign: 'middle'
+  });
+
+  // ── Images ──
+  addImg(slide, 'exp_cavity_filter',         1.2352, 1.5205, 1.2541, 1.7965);
+  addImg(slide, 'exp_hsk_3d_with_board',     3.8242, 1.5227, 1.2465, 1.8597);
+  addImg(slide, 'exp_hsk_3d_with_board_sub', 3.8380, 3.8639, 1.1419, 1.4291);
+  addImg(slide, 'exp_hsk_3d_with_board_sub2',3.8183, 5.3195, 1.1663, 1.4477);
+  addImg(slide, 'exp_hsk_3d',               6.6007, 1.5302, 1.2222, 1.8467);
+  addImg(slide, 'exp_hsk_top',              7.8308, 1.4866, 1.1880, 1.9130);
+  addImg(slide, 'exp_hsk_3d_sub',           7.1031, 4.1077, 1.4238, 0.6865);
+  addImg(slide, 'exp_hsk_top_sub',         10.3632, 1.6922, 1.2840, 1.5896);
+
+  // ── Red dashed rounded rectangle ──
+  slide.addShape(pptx.ShapeType.roundRect, {
+    x: 3.7940, y: 3.8207, w: 1.2164, h: 0.9293,
+    fill: { type: 'none' },
+    line: { color: RED, pt: 1, dashType: 'dash' },
+    rectRadius: 0.1
+  });
+
+  // ── Spec: Cavity Filter ──
+  const cavSize = cfg.cavity_size || '?';
+  slide.addText([
+    { text: 'Cavity Filter:', options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: '\n• ' + cavSize, options: { fontFace: F, color: RED, fontSize: 10 } }
+  ], { x: 0.9618, y: 4.6696, w: 2.2943, h: 0.5049, valign: 'top' });
+
+  // ── Spec: Heat pipe ──
+  const hpCount = cfg.hp_count || '?';
+  slide.addText([
+    { text: 'Heat pipe:', options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: '\n' + hpCount, options: { fontFace: F, color: RED, fontSize: 10 } },
+    { text: ' pcs D6 powder HP---FPGA', options: { fontFace: F, color: BLK, fontSize: 10 } }
+  ], { x: 10.214, y: 4.1216, w: 2.6136, h: 0.5049, valign: 'top' });
+
+  // ── Spec: Board sizes ──
+  const drSize  = cfg.digital_rf_size || '?';
+  const pwrSize = cfg.pwr_size        || '?';
+  slide.addText([
+    { text: 'Digital/B + RF/B: ', options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: drSize,               options: { fontFace: F, color: RED,  fontSize: 10 } },
+    { text: '\nPWR/B: ',          options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: pwrSize,              options: { fontFace: F, color: RED,  fontSize: 10 } }
+  ], { x: 3.6127, y: 6.9263, w: 2.5350, h: 0.3366, valign: 'top' });
+
+  // ── Spec: Base / Fin ──
+  const baseT = cfg.base_thickness || '?';
+  const finT  = cfg.fin_thickness  || '?';
+  const finH  = cfg.fin_height     || '?';
+  const finP  = cfg.fin_pitch      || '?';
+  slide.addText([
+    { text: 'Base:',                          options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: '\n• thickness: ',                options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: baseT,                            options: { fontFace: F, color: RED,  fontSize: 10 } },
+    { text: '\n• Al die-casting, Alloy (K=150W/mK)', options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: '\nFin:',                         options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: '\nBottom case-',                 options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: '\n• thickness: ',               options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: finT,                             options: { fontFace: F, color: RED,  fontSize: 10 } },
+    { text: '\n• Height: ',                   options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: finH,                             options: { fontFace: F, color: RED,  fontSize: 10 } },
+    { text: '\n• Fin pitch: ',                options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: finP,                             options: { fontFace: F, color: RED,  fontSize: 10 } }
+  ], { x: 6.7991, y: 5.3179, w: 2.7373, h: 1.6829, valign: 'top' });
+
+  // ── Connector lines (fixed) ──
+  // ID=60: Cavity label callout
+  slide.addShape('curvedConnector2', {
+    x: 0.749, y: 3.620, w: 1.662, h: 0.270,
+    line: { color: '000000', endArrowType: 'triangle', width: 1 }
+  });
+  // ID=26: board callout 上
+  slide.addShape('curvedConnector2', {
+    x: 4.880, y: 4.171, w: 0.430, h: 0.071,
+    line: { color: '000000', width: 1 }
+  });
+  // ID=28: board callout 下左
+  slide.addShape('curvedConnector2', {
+    x: 3.506, y: 6.347, w: 0.411, h: 0.166,
+    line: { color: '000000', width: 1 }
+  });
+  // ID=31: board callout 下右
+  slide.addShape('curvedConnector2', {
+    x: 4.880, y: 6.443, w: 0.236, h: 0.084,
+    line: { color: '000000', width: 1 }
+  });
+  // ID=34, 35, 36: rect connector bars
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 5.310, y: 4.171, w: 0.626, h: 0.168,
+    fill: { color: '000000' }, line: { color: '000000', pt: 0 }
+  });
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 5.116, y: 6.443, w: 0.626, h: 0.168,
+    fill: { color: '000000' }, line: { color: '000000', pt: 0 }
+  });
+  slide.addShape(pptx.ShapeType.rect, {
+    x: 2.907, y: 6.443, w: 0.626, h: 0.168,
+    fill: { color: '000000' }, line: { color: '000000', pt: 0 }
   });
 }
 
