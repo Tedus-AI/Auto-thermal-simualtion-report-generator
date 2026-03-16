@@ -217,6 +217,14 @@
     }
     .img-slot .slot-desc { font-size: 11px; color: var(--gray-600); line-height: 1.3; }
     .img-slot .upload-icon { font-size: 22px; color: var(--gray-400); }
+    .img-slot.active-slot {
+      border-color: var(--blue);
+      border-style: solid;
+      box-shadow: 0 0 0 3px rgba(0,91,170,.18);
+    }
+    .paste-hint { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+    .img-slot.active-slot .paste-hint { color: var(--blue); font-weight: 600; }
+
     .img-slot .clear-btn {
       position: absolute;
       top: 4px; right: 4px;
@@ -584,6 +592,7 @@
 let uploadedImages  = {};   // key -> base64 data URL
 let flothermRows    = [];   // raw parsed CSV rows
 let matchResults    = [];   // processed match results
+let activeSlotKey   = null; // currently selected slot for Ctrl+V paste
 
 /* ═══════════════════════════════════════════════════════════════
    Page Definitions
@@ -615,8 +624,6 @@ const IMG_SLOTS = [
   { section: '投影片背景 (Slide Backgrounds)',  key: 'bg_cover',   desc: '封面背景 PNG（從 PPT 匯出）' },
   { section: null,                              key: 'bg_content', desc: '內頁背景 PNG（從 PPT 匯出）' },
   { section: null,                              key: 'bg_closing', desc: '結尾頁背景 PNG（從 PPT 匯出）' },
-  // Cover
-  { section: '封面 / Cover',            key: 'cover_3d',           desc: '產品 3D 外觀圖' },
   // Boundary Conditions
   { section: 'Boundary Conditions',     key: 'dim_3d',             desc: '3D 爆炸圖' },
   { section: null,                      key: 'dim_front',          desc: '正面尺寸視圖' },
@@ -694,7 +701,13 @@ function initUI() {
       <span class="upload-icon">🖼</span>
       <span class="slot-code">${slot.key}</span>
       <span class="slot-desc">${slot.desc}</span>
+      <span class="paste-hint">點選後可 Ctrl+V 貼上</span>
     `;
+    // click to activate slot for paste
+    div.addEventListener('click', e => {
+      if (e.target.classList.contains('clear-btn')) return;
+      setActiveSlot(slot.key);
+    });
     // drag events
     div.addEventListener('dragover', e => { e.preventDefault(); div.classList.add('drag-over'); });
     div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
@@ -725,6 +738,10 @@ function initUI() {
   const today = new Date();
   document.getElementById('cfg_date').value =
     `${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}/${today.getFullYear()}`;
+
+  // Pre-fill fixed boundary condition fields (these don't change per project)
+  document.getElementById('cfg_flow_type').value    = 'Natural Convection ( Fanless )';
+  document.getElementById('cfg_installation').value = 'Pole mount';
 
   // Auto-load Delta template backgrounds from assets/
   preloadBackgrounds();
@@ -818,6 +835,36 @@ function parseSizeMM(str) {
 /* ═══════════════════════════════════════════════════════════════
    Image Upload
 ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   Active Slot & Clipboard Paste
+═══════════════════════════════════════════════════════════════ */
+function setActiveSlot(key) {
+  if (activeSlotKey) {
+    document.getElementById(`slot_${activeSlotKey}`)?.classList.remove('active-slot');
+  }
+  activeSlotKey = key;
+  const el = document.getElementById(`slot_${key}`);
+  if (el) {
+    el.classList.add('active-slot');
+    const hint = el.querySelector('.paste-hint');
+    if (hint) hint.textContent = '✅ 已選取 — 按 Ctrl+V 貼上';
+  }
+}
+
+document.addEventListener('paste', e => {
+  const imgItem = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+  if (!imgItem) return;
+  e.preventDefault();
+  const file = imgItem.getAsFile();
+  if (!file) return;
+  if (activeSlotKey) {
+    processImageFile(activeSlotKey, file);
+    setStatus(`✅ 已從剪貼簿貼上圖片至：${activeSlotKey}`);
+  } else {
+    setStatus('⚠️ 請先點選要貼上的圖片框，再按 Ctrl+V');
+  }
+});
+
 function handleImageUpload(event) {
   const file = event.target.files[0];
   const key  = event.target.dataset.key;
