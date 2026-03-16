@@ -204,7 +204,24 @@
     }
     .img-slot:hover, .img-slot.drag-over { border-color: var(--blue); background: var(--blue-pale); }
     .img-slot.has-image { border-style: solid; border-color: var(--green); }
-    .img-slot input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .img-slot input[type=file] { display: none; }
+    .file-btn {
+      font-size: 11px;
+      background: var(--blue-pale);
+      color: var(--blue);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+      position: relative;
+      z-index: 5;
+      user-select: none;
+    }
+    .file-btn:hover { background: var(--blue); color: var(--white); border-color: var(--blue); }
     .img-slot .preview-img { max-width: 100%; max-height: 90px; object-fit: contain; border-radius: 4px; }
     .img-slot .slot-code {
       font-size: 10px;
@@ -697,15 +714,18 @@ function initUI() {
     div.className = 'img-slot';
     div.id = `slot_${slot.key}`;
     div.innerHTML = `
-      <input type="file" accept="image/*" data-key="${slot.key}" onchange="handleImageUpload(event)" />
       <span class="upload-icon">🖼</span>
       <span class="slot-code">${slot.key}</span>
       <span class="slot-desc">${slot.desc}</span>
-      <span class="paste-hint">點選後可 Ctrl+V 貼上</span>
+      <span class="paste-hint">點選此框後可 Ctrl+V 貼上</span>
+      <label class="file-btn">
+        📂 選擇檔案
+        <input type="file" accept="image/*" data-key="${slot.key}" onchange="handleImageUpload(event)" />
+      </label>
     `;
-    // click to activate slot for paste
+    // 點擊框體（非按鈕、非清除鈕）→ 啟動此框為貼上目標
     div.addEventListener('click', e => {
-      if (e.target.classList.contains('clear-btn')) return;
+      if (e.target.classList.contains('clear-btn') || e.target.closest('.file-btn')) return;
       setActiveSlot(slot.key);
     });
     // drag events
@@ -852,16 +872,26 @@ function setActiveSlot(key) {
 }
 
 document.addEventListener('paste', e => {
-  const imgItem = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
-  if (!imgItem) return;
+  const items = [...(e.clipboardData?.items || [])];
+  const imgItem = items.find(i => i.type.startsWith('image/'));
+
+  if (!imgItem) {
+    // 有剪貼內容但格式不是圖片（例如 Office 複製的 EMF 格式）
+    if (items.length > 0) {
+      setStatus('⚠️ 無法讀取此格式。從 Excel / Word / PPT 複製的圖片請改用截圖 (Win+Shift+S) 後再貼上。');
+    }
+    return;
+  }
+
   e.preventDefault();
   const file = imgItem.getAsFile();
   if (!file) return;
+
   if (activeSlotKey) {
     processImageFile(activeSlotKey, file);
     setStatus(`✅ 已從剪貼簿貼上圖片至：${activeSlotKey}`);
   } else {
-    setStatus('⚠️ 請先點選要貼上的圖片框，再按 Ctrl+V');
+    setStatus('⚠️ 請先點選目標圖片框（框會變藍色），再按 Ctrl+V');
   }
 });
 
