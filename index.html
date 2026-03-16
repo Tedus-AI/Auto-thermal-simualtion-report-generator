@@ -1593,16 +1593,14 @@ function addBoundarySlide(cfg) {
 
   // ── Callout curved arrows ──
   // ID=14: Top case callout (curvedConnector2, group座標)
-  slide.addShape(pptx.ShapeType.curvedConnector2, {
+  slide.addShape('curvedConnector2', {
     x: 3.4382, y: 4.194, w: 1.1112, h: 0.5999,
-    flipH: false, flipV: false,
-    line: { color: '000000', endArrowType: 'triangle' }
+    line: { color: '000000', endArrowType: 'triangle', width: 1 }
   });
   // ID=41: Bottom case callout (curvedConnector3, slide座標)
-  slide.addShape(pptx.ShapeType.curvedConnector3, {
+  slide.addShape('curvedConnector3', {
     x: 3.0764, y: 6.1478, w: 0.6817, h: 0.5728,
-    flipH: false, flipV: false,
-    line: { color: '000000', endArrowType: 'triangle' }
+    line: { color: '000000', endArrowType: 'triangle', width: 1 }
   });
 }
 
