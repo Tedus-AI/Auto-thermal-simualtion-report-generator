@@ -1431,8 +1431,8 @@ function addBoundarySlide(cfg) {
   });
 
   // ── Bullet lines ──
-  // Box: left=0.5997, top=1.1853, w=11.0, h=1.6627 → 5 lines × 0.3325"
-  const bx = 0.5997, by = 1.1853, bw = 11.0, lineH = 1.6627 / 5;
+  // Box: left=0.5997, top=1.1853, w=11.0, h=1.6627 → 4 lines × 0.4157"
+  const bx = 0.5997, by = 1.1853, bw = 11.0, lineH = 1.6627 / 4;
   const [dimL, dimW, dimH] = parseSizeMM(cfg.product_size_mm);
   const temp = cfg.ambient_temp_c != null ? String(cfg.ambient_temp_c) : '?';
   const vol  = cfg.product_volume_l != null ? String(cfg.product_volume_l) : '?';
@@ -1456,17 +1456,13 @@ function addBoundarySlide(cfg) {
   slide.addText([BLT, B(`Installation : ${inst}`)],
     { x: bx, y: by + lineH * 2, w: bw, h: lineH, valign: 'middle' });
 
-  // Line 4 — Product size label (fixed blue)
-  slide.addText([BLT, B('Product size (Unit: mm) :')],
-    { x: bx, y: by + lineH * 3, w: bw, h: lineH, valign: 'middle' });
-
-  // Line 5 — Dimension values (red) + note (dark gray 12pt)
+  // Line 4 — Product size label + dimension values on same line
   slide.addText([
     BLT,
-    B('      '),
+    B('Product size (Unit: mm) : '),
     B(`${dimL||'?'}(L)*${dimW||'?'}(W)*${dimH||'?'}(H) = ${vol}L `, { color: 'FF0000' }),
     { text: '(include waterproof structure)', options: { fontFace: 'Arial Rounded MT Bold', color: '404040', fontSize: 12 } }
-  ], { x: bx, y: by + lineH * 4, w: bw, h: lineH, valign: 'middle' });
+  ], { x: bx, y: by + lineH * 3, w: bw, h: lineH, valign: 'middle' });
 
   // ── Images (variable per project) ──
   addImg(slide, 'dim_3d',     1.8024,  3.8146, 2.0139, 2.5248);  // 產品3D圖
