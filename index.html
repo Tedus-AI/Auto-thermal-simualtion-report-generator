@@ -1827,33 +1827,34 @@ function addExplodedViewSlide(cfg) {
   const finH  = cfg.fin_height     || '?';
   const finP  = cfg.fin_pitch      || '?';
   const BLT   = { code: '2022', indent: 13.5, marginPt: 13.5 }; // • bullet
-  // 注意：第1,4,5,6,10段完全不傳 bullet 選項，讓 pptxgen 不寫任何 <a:pPr>
-  // （傳 bullet:false 會生成 <a:pPr><a:buNone/></a:pPr>，反而繼承上方 bullet 樣式）
+  // ★ 完全不用 \n，改用 breakLine:true 作為段落結尾
+  // 原因：pptxgen 會把含 \n 的文字 split，bullet run 的 trailing \n
+  // 會額外產生帶 bullet 的空白段落，造成多餘換行與多餘 bullet。
   slide.addText([
-    // Para 1: Base:（無 pPr）
-    { text: 'Base:\n',        options: { fontFace: F, color: BLK, fontSize: 10 } },
-    // Para 2: • thickness: [RED]（有 bullet pPr）
-    { text: 'thickness: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
-    { text: baseT + '\n',     options: { fontFace: F, color: RED,  fontSize: 10 } },
-    // Para 3: • Al die-casting...（有 bullet pPr）
-    { text: 'Al die-casting, Alloy (K=150W/mK)\n', options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
-    // Para 4: 空白行（無 pPr）
-    { text: '\n',             options: { fontFace: F, color: BLK, fontSize: 10 } },
-    // Para 5: Fin:（無 pPr）
-    { text: 'Fin:\n',         options: { fontFace: F, color: BLK, fontSize: 10 } },
-    // Para 6: Bottom case-（無 pPr，尾部有空格）
-    { text: 'Bottom case- \n', options: { fontFace: F, color: BLK, fontSize: 10 } },
-    // Para 7: • thickness: [RED]（有 bullet pPr）
-    { text: 'thickness: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
-    { text: finT + '\n',      options: { fontFace: F, color: RED,  fontSize: 10 } },
-    // Para 8: • Height: [RED]（有 bullet pPr）
-    { text: 'Height: ',       options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
-    { text: finH + '\n',      options: { fontFace: F, color: RED,  fontSize: 10 } },
-    // Para 9: • Fin pitch: [RED]（有 bullet pPr）
-    { text: 'Fin pitch: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
-    { text: finP + '\n',      options: { fontFace: F, color: RED,  fontSize: 10 } },
-    // Para 10: 尾部空白行（無 pPr）
-    { text: '',               options: { fontFace: F, color: BLK, fontSize: 10 } }
+    // Para 1: Base:（無 bullet）
+    { text: 'Base:',         options: { fontFace: F, color: BLK, fontSize: 10, breakLine: true } },
+    // Para 2: • thickness: [RED]
+    { text: 'thickness: ',   options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
+    { text: baseT,           options: { fontFace: F, color: RED,  fontSize: 10, breakLine: true } },
+    // Para 3: • Al die-casting...
+    { text: 'Al die-casting, Alloy (K=150W/mK)', options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT, breakLine: true } },
+    // Para 4: 空白行（無 bullet）
+    { text: '',              options: { fontFace: F, color: BLK, fontSize: 10, breakLine: true } },
+    // Para 5: Fin:（無 bullet）
+    { text: 'Fin:',          options: { fontFace: F, color: BLK, fontSize: 10, breakLine: true } },
+    // Para 6: Bottom case-（無 bullet，尾部有空格）
+    { text: 'Bottom case- ', options: { fontFace: F, color: BLK, fontSize: 10, breakLine: true } },
+    // Para 7: • thickness: [RED]
+    { text: 'thickness: ',   options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
+    { text: finT,            options: { fontFace: F, color: RED,  fontSize: 10, breakLine: true } },
+    // Para 8: • Height: [RED]
+    { text: 'Height: ',      options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
+    { text: finH,            options: { fontFace: F, color: RED,  fontSize: 10, breakLine: true } },
+    // Para 9: • Fin pitch: [RED]
+    { text: 'Fin pitch: ',   options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
+    { text: finP,            options: { fontFace: F, color: RED,  fontSize: 10, breakLine: true } },
+    // Para 10: 尾部空白行（無 bullet，最後一項不需 breakLine）
+    { text: '',              options: { fontFace: F, color: BLK, fontSize: 10 } }
   ], { x: 6.7991, y: 5.3179, w: 2.7373, h: 1.6829, valign: 'middle' });
 
   // ── Connector lines & label rects (fixed) ──
