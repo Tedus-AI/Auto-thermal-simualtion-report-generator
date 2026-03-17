@@ -1740,10 +1740,14 @@ function addExplodedViewSlide(cfg) {
     fontSize: 28, fontFace: F, color: BLK, valign: 'middle'
   });
 
-  // ── "Exploded view:" label ──
+  // ── ID=6: "Exploded view:" label ──
+  // 18pt 藍色，段前 spcPct=200%（≈36pt），noFill，無 anchor（PPT 預設頂端）
+  // 無 <a:ea>、無 <a:cs>（與 ID=7 不同）
   slide.addText('Exploded view:', {
-    x: 0.2619, y: 0.934, w: 2.1209, h: 0.4039,
-    fontSize: 18, fontFace: F, color: BLU, valign: 'middle'
+    x: 0.3685, y: 0.9908, w: 2.1209, h: 0.4039,
+    fontSize: 18, fontFace: F, color: BLU,
+    paraSpaceBefore: 36,
+    fill: { type: 'none' }, line: { type: 'none' }
   });
 
   // ── Column labels ──
@@ -1798,15 +1802,23 @@ function addExplodedViewSlide(cfg) {
     fill: { type: 'none' }, line: { type: 'none' }
   });
 
-  // ── Spec: Board sizes ──
+  // ── Spec: Board sizes (ID=69) ──
+  // 2 段純文字，完全沒有 <a:pPr> / bullet
+  // Para1 含語系切換空格：run間 "Digital/B" + " " + "+" + " " + "RF/B:" + [RED]
   const drSize  = cfg.digital_rf_size || '?';
   const pwrSize = cfg.pwr_size        || '?';
   slide.addText([
-    { text: 'Digital/B + RF/B: ', options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: drSize,               options: { fontFace: F, color: RED,  fontSize: 10 } },
-    { text: '\nPWR/B: ',          options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: pwrSize,              options: { fontFace: F, color: RED,  fontSize: 10 } }
-  ], { x: 3.6127, y: 6.9263, w: 2.5350, h: 0.3366, valign: 'top' });
+    // Para 1：Digital/B + RF/B: [RED]（語系切換空格保留為獨立 run）
+    { text: 'Digital/B',   options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: ' ',           options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: '+',           options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: ' ',           options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: 'RF/B:',       options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: drSize + '\n', options: { fontFace: F, color: RED,  fontSize: 10 } },
+    // Para 2：PWR/B: [RED]
+    { text: 'PWR/B:',      options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: pwrSize,       options: { fontFace: F, color: RED,  fontSize: 10 } }
+  ], { x: 3.6127, y: 6.9263, w: 2.5350, h: 0.3366, valign: 'middle' });
 
   // ── Spec: Base / Fin (ID=7) ──
   // 10 段落：黑色固定文字 + 紅色變數同段，bullet 段落含 hanging indent
@@ -1815,20 +1827,21 @@ function addExplodedViewSlide(cfg) {
   const finH  = cfg.fin_height     || '?';
   const finP  = cfg.fin_pitch      || '?';
   const BLT   = { code: '2022', indent: 13.5, marginPt: 13.5 }; // • bullet
+  const NONE  = false; // <a:buNone/> — 明確關閉 bullet，防止繼承
   slide.addText([
-    // Para 1: Base:（無 bullet）
-    { text: 'Base:\n',        options: { fontFace: F, color: BLK, fontSize: 10 } },
+    // Para 1: Base:（明確 buNone）
+    { text: 'Base:\n',        options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } },
     // Para 2: • thickness: [RED]（同段兩 run）
     { text: 'thickness: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
     { text: baseT + '\n',     options: { fontFace: F, color: RED,  fontSize: 10 } },
     // Para 3: • Al die-casting...（無 ea）
     { text: 'Al die-casting, Alloy (K=150W/mK)\n', options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
-    // Para 4: 空白行
-    { text: '\n',             options: { fontFace: F, color: BLK, fontSize: 10 } },
-    // Para 5: Fin:（無 bullet）
-    { text: 'Fin:\n',         options: { fontFace: F, color: BLK, fontSize: 10 } },
-    // Para 6: Bottom case-（注意尾部有空格）
-    { text: 'Bottom case- \n', options: { fontFace: F, color: BLK, fontSize: 10 } },
+    // Para 4: 空白行（明確 buNone，防止繼承上方 bullet）
+    { text: '\n',             options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } },
+    // Para 5: Fin:（明確 buNone）
+    { text: 'Fin:\n',         options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } },
+    // Para 6: Bottom case-（明確 buNone，尾部有空格）
+    { text: 'Bottom case- \n', options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } },
     // Para 7: • thickness: [RED]（同段兩 run）
     { text: 'thickness: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
     { text: finT + '\n',      options: { fontFace: F, color: RED,  fontSize: 10 } },
@@ -1838,44 +1851,57 @@ function addExplodedViewSlide(cfg) {
     // Para 9: • Fin pitch: [RED]（同段兩 run）
     { text: 'Fin pitch: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
     { text: finP + '\n',      options: { fontFace: F, color: RED,  fontSize: 10 } },
-    // Para 10: 尾部空白行
-    { text: '',               options: { fontFace: F, color: BLK, fontSize: 10 } }
+    // Para 10: 尾部空白行（明確 buNone）
+    { text: '',               options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } }
   ], { x: 6.7991, y: 5.3179, w: 2.7373, h: 1.6829, valign: 'middle' });
 
-  // ── Connector lines (fixed) ──
-  // ID=60: Cavity label callout (curvedConnector3, rot=90°)
+  // ── Connector lines & label rects (fixed) ──
+  // ID=60: Cavity label callout（curvedConnector3, rot=90°）
   slide.addShape('curvedConnector3', {
     x: 0.7489, y: 3.6200, w: 1.6619, h: 0.2699,
     rotate: 90,
     line: { color: '000000', endArrowType: 'triangle' }
   });
-  // ID=26: board callout 上
-  slide.addShape('curvedConnector2', {
-    x: 4.880, y: 4.171, w: 0.430, h: 0.071,
-    line: { color: '000000', width: 1 }
+
+  // ID=26: 上方曲線 → RF/B（curvedConnector3，無旋轉）
+  slide.addShape('curvedConnector3', {
+    x: 4.8802, y: 4.1714, w: 0.4302, h: 0.0711,
+    line: { color: '000000', endArrowType: 'triangle' }
   });
-  // ID=28: board callout 下左
-  slide.addShape('curvedConnector2', {
-    x: 3.506, y: 6.347, w: 0.411, h: 0.166,
-    line: { color: '000000', width: 1 }
+
+  // ID=28: 下左曲線 → Digital/B（curvedConnector3, rot=180°, flipV）
+  slide.addShape('curvedConnector3', {
+    x: 3.5063, y: 6.3471, w: 0.4114, h: 0.1662,
+    rotate: 180, flipV: true,
+    line: { color: '000000', endArrowType: 'triangle' }
   });
-  // ID=31: board callout 下右
-  slide.addShape('curvedConnector2', {
-    x: 4.880, y: 6.443, w: 0.236, h: 0.084,
-    line: { color: '000000', width: 1 }
+
+  // ID=31: 下右曲線 → PWR/B（curvedConnector3, rot=180°）
+  slide.addShape('curvedConnector3', {
+    x: 4.8802, y: 6.4428, w: 0.2362, h: 0.0841,
+    rotate: 180,
+    line: { color: '000000', endArrowType: 'triangle' }
   });
-  // ID=34, 35, 36: rect connector bars
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 5.310, y: 4.171, w: 0.626, h: 0.168,
-    fill: { color: '000000' }, line: { color: '000000', pt: 0 }
+
+  // ID=34: RF/B 標籤矩形（固定文字，無填色邊框）
+  slide.addText('RF/B', {
+    x: 5.3103, y: 4.1714, w: 0.626, h: 0.1683,
+    fontFace: F, fontSize: 10, color: BLK,
+    fill: { type: 'none' }, line: { type: 'none' }
   });
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 5.116, y: 6.443, w: 0.626, h: 0.168,
-    fill: { color: '000000' }, line: { color: '000000', pt: 0 }
+
+  // ID=35: PWR/B 標籤矩形（固定文字，無填色邊框）
+  slide.addText('PWR/B', {
+    x: 5.1164, y: 6.4428, w: 0.626, h: 0.1683,
+    fontFace: F, fontSize: 10, color: BLK,
+    fill: { type: 'none' }, line: { type: 'none' }
   });
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 2.907, y: 6.443, w: 0.626, h: 0.168,
-    fill: { color: '000000' }, line: { color: '000000', pt: 0 }
+
+  // ID=36: Digital/B 標籤矩形（固定文字，無填色邊框）
+  slide.addText('Digital/B', {
+    x: 2.9065, y: 6.4428, w: 0.626, h: 0.1683,
+    fontFace: F, fontSize: 10, color: BLK,
+    fill: { type: 'none' }, line: { type: 'none' }
   });
 }
 
