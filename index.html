@@ -1851,40 +1851,53 @@ function addExplodedViewSlide(cfg) {
     { text: '',               options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } }
   ], { x: 6.7991, y: 5.3179, w: 2.7373, h: 1.6829, valign: 'middle' });
 
-  // ── Connector lines (fixed) ──
-  // ID=60: Cavity label callout (curvedConnector3, rot=90°)
+  // ── Connector lines & label rects (fixed) ──
+  // ID=60: Cavity label callout（curvedConnector3, rot=90°）
   slide.addShape('curvedConnector3', {
     x: 0.7489, y: 3.6200, w: 1.6619, h: 0.2699,
     rotate: 90,
     line: { color: '000000', endArrowType: 'triangle' }
   });
-  // ID=26: board callout 上
-  slide.addShape('curvedConnector2', {
-    x: 4.880, y: 4.171, w: 0.430, h: 0.071,
-    line: { color: '000000', width: 1 }
+
+  // ID=26: 上方曲線 → RF/B（curvedConnector3，無旋轉）
+  slide.addShape('curvedConnector3', {
+    x: 4.8802, y: 4.1714, w: 0.4302, h: 0.0711,
+    line: { color: '000000', endArrowType: 'triangle' }
   });
-  // ID=28: board callout 下左
-  slide.addShape('curvedConnector2', {
-    x: 3.506, y: 6.347, w: 0.411, h: 0.166,
-    line: { color: '000000', width: 1 }
+
+  // ID=28: 下左曲線 → Digital/B（curvedConnector3, rot=180°, flipV）
+  slide.addShape('curvedConnector3', {
+    x: 3.5063, y: 6.3471, w: 0.4114, h: 0.1662,
+    rotate: 180, flipV: true,
+    line: { color: '000000', endArrowType: 'triangle' }
   });
-  // ID=31: board callout 下右
-  slide.addShape('curvedConnector2', {
-    x: 4.880, y: 6.443, w: 0.236, h: 0.084,
-    line: { color: '000000', width: 1 }
+
+  // ID=31: 下右曲線 → PWR/B（curvedConnector3, rot=180°）
+  slide.addShape('curvedConnector3', {
+    x: 4.8802, y: 6.4428, w: 0.2362, h: 0.0841,
+    rotate: 180,
+    line: { color: '000000', endArrowType: 'triangle' }
   });
-  // ID=34, 35, 36: rect connector bars
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 5.310, y: 4.171, w: 0.626, h: 0.168,
-    fill: { color: '000000' }, line: { color: '000000', pt: 0 }
+
+  // ID=34: RF/B 標籤矩形（固定文字，無填色邊框）
+  slide.addText('RF/B', {
+    x: 5.3103, y: 4.1714, w: 0.626, h: 0.1683,
+    fontFace: F, fontSize: 10, color: BLK,
+    fill: { type: 'none' }, line: { type: 'none' }
   });
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 5.116, y: 6.443, w: 0.626, h: 0.168,
-    fill: { color: '000000' }, line: { color: '000000', pt: 0 }
+
+  // ID=35: PWR/B 標籤矩形（固定文字，無填色邊框）
+  slide.addText('PWR/B', {
+    x: 5.1164, y: 6.4428, w: 0.626, h: 0.1683,
+    fontFace: F, fontSize: 10, color: BLK,
+    fill: { type: 'none' }, line: { type: 'none' }
   });
-  slide.addShape(pptx.ShapeType.rect, {
-    x: 2.907, y: 6.443, w: 0.626, h: 0.168,
-    fill: { color: '000000' }, line: { color: '000000', pt: 0 }
+
+  // ID=36: Digital/B 標籤矩形（固定文字，無填色邊框）
+  slide.addText('Digital/B', {
+    x: 2.9065, y: 6.4428, w: 0.626, h: 0.1683,
+    fontFace: F, fontSize: 10, color: BLK,
+    fill: { type: 'none' }, line: { type: 'none' }
   });
 }
 
