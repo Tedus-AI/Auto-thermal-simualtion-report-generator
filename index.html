@@ -1785,13 +1785,18 @@ function addExplodedViewSlide(cfg) {
     { text: '\n• ' + cavSize, options: { fontFace: F, color: RED, fontSize: 10 } }
   ], { x: 0.9618, y: 4.6696, w: 2.2943, h: 0.5049, valign: 'top' });
 
-  // ── Spec: Heat pipe ──
+  // ── Spec: Heat pipe (ID=38) ──
+  // 2段落：第1段 "Heat pipe:"，第2段 [HP_COUNT] + "pcs D6 powder HP---FPGA"
   const hpCount = cfg.hp_count || '?';
   slide.addText([
-    { text: 'Heat pipe: ', options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: hpCount, options: { fontFace: F, color: RED, fontSize: 10 } },
-    { text: ' pcs D6 powder HP---FPGA', options: { fontFace: F, color: BLK, fontSize: 10, bold: true } }
-  ], { x: 10.214, y: 4.1216, w: 2.6136, h: 0.5049, valign: 'top' });
+    { text: 'Heat pipe:\n', options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: hpCount,        options: { fontFace: F, color: RED, fontSize: 10 } },
+    { text: 'pcs D6 powder HP---FPGA', options: { fontFace: F, color: BLK, fontSize: 10 } }
+  ], {
+    x: 10.214, y: 4.2058, w: 2.6136, h: 0.3366,
+    valign: 'middle',
+    fill: { type: 'none' }, line: { type: 'none' }
+  });
 
   // ── Spec: Board sizes ──
   const drSize  = cfg.digital_rf_size || '?';
