@@ -1883,24 +1883,30 @@ function addExplodedViewSlide(cfg) {
     line: { color: '000000', endArrowType: 'triangle' }
   });
 
-  // ID=34: RF/B 標籤矩形（固定文字，無填色邊框）
+  // ID=34: RF/B 標籤矩形
+  // bodyPr: wrap="square" lIns/rIns/tIns/bIns=0 anchor="ctr" <a:spAutoFit/>
   slide.addText('RF/B', {
     x: 5.3103, y: 4.1714, w: 0.626, h: 0.1683,
     fontFace: F, fontSize: 10, color: BLK,
+    valign: 'middle', margin: 0, autoFit: true,
     fill: { type: 'none' }, line: { type: 'none' }
   });
 
-  // ID=35: PWR/B 標籤矩形（固定文字，無填色邊框）
+  // ID=35: PWR/B 標籤矩形
+  // bodyPr: wrap="square" lIns/rIns/tIns/bIns=0 anchor="ctr" <a:spAutoFit/>
   slide.addText('PWR/B', {
     x: 5.1164, y: 6.4428, w: 0.626, h: 0.1683,
     fontFace: F, fontSize: 10, color: BLK,
+    valign: 'middle', margin: 0, autoFit: true,
     fill: { type: 'none' }, line: { type: 'none' }
   });
 
-  // ID=36: Digital/B 標籤矩形（固定文字，無填色邊框）
+  // ID=36: Digital/B 標籤矩形
+  // bodyPr: wrap="square" lIns/rIns/tIns/bIns=0 anchor="ctr" <a:spAutoFit/>
   slide.addText('Digital/B', {
     x: 2.9065, y: 6.4428, w: 0.626, h: 0.1683,
     fontFace: F, fontSize: 10, color: BLK,
+    valign: 'middle', margin: 0, autoFit: true,
     fill: { type: 'none' }, line: { type: 'none' }
   });
 }
