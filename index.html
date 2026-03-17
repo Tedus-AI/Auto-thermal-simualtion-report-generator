@@ -1740,10 +1740,14 @@ function addExplodedViewSlide(cfg) {
     fontSize: 28, fontFace: F, color: BLK, valign: 'middle'
   });
 
-  // ── "Exploded view:" label ──
+  // ── ID=6: "Exploded view:" label ──
+  // 18pt 藍色，段前 spcPct=200%（≈36pt），noFill，無 anchor（PPT 預設頂端）
+  // 無 <a:ea>、無 <a:cs>（與 ID=7 不同）
   slide.addText('Exploded view:', {
-    x: 0.2619, y: 0.934, w: 2.1209, h: 0.4039,
-    fontSize: 18, fontFace: F, color: BLU, valign: 'middle'
+    x: 0.3685, y: 0.9908, w: 2.1209, h: 0.4039,
+    fontSize: 18, fontFace: F, color: BLU,
+    paraSpaceBefore: 36,
+    fill: { type: 'none' }, line: { type: 'none' }
   });
 
   // ── Column labels ──
