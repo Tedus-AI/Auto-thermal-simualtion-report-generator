@@ -499,38 +499,75 @@
     <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200);">
       <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:8px;">📦 Exploded View 結構規格（第3頁）</div>
       <div class="form-grid">
+
+        <!-- CAVITY_SIZE: 標籤在上，三格在下（允許換行） -->
         <div class="form-group">
-          <label>Cavity Filter 尺寸 (CAVITY_SIZE)</label>
-          <input type="text" id="cfg_cavity_size" placeholder="339mm*272mm*42mm" />
+          <label>Cavity Filter 尺寸 (L×W×H)</label>
+          <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+            <input type="number" id="cfg_cavity_l" placeholder="339" step="0.1" style="width:58px;" />
+            <span style="font-size:11px;">mm ×</span>
+            <input type="number" id="cfg_cavity_w" placeholder="272" step="0.1" style="width:58px;" />
+            <span style="font-size:11px;">mm ×</span>
+            <input type="number" id="cfg_cavity_h" placeholder="42" step="0.1" style="width:58px;" />
+            <span style="font-size:11px;">mm</span>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Heat pipe 數量 (HP_COUNT)</label>
-          <input type="text" id="cfg_hp_count" placeholder="2" />
+
+        <!-- HP_COUNT: 全行內 -->
+        <div class="form-group" style="flex-direction:row;align-items:center;flex-wrap:wrap;gap:6px;">
+          <label style="margin-bottom:0;flex-shrink:0;white-space:nowrap;">Heat pipe 數量</label>
+          <input type="number" id="cfg_hp_count" placeholder="2" step="1" style="width:52px;" />
+          <span style="font-size:11px;color:#555;white-space:nowrap;">pcs D6 powder HP---FPGA</span>
         </div>
-        <div class="form-group">
-          <label>Digital/B + RF/B 尺寸 (DIGITAL_RF_SIZE)</label>
-          <input type="text" id="cfg_digital_rf_size" placeholder="320mm*256mm" />
+
+        <!-- DIGITAL_RF_SIZE: 全行內 -->
+        <div class="form-group" style="flex-direction:row;align-items:center;flex-wrap:wrap;gap:6px;">
+          <label style="margin-bottom:0;flex-shrink:0;white-space:nowrap;">Digital/B + RF/B</label>
+          <input type="number" id="cfg_dr_a" placeholder="320" step="0.1" style="width:58px;" />
+          <span style="font-size:11px;">mm ×</span>
+          <input type="number" id="cfg_dr_b" placeholder="256" step="0.1" style="width:58px;" />
+          <span style="font-size:11px;">mm</span>
         </div>
-        <div class="form-group">
-          <label>PWR Board 尺寸 (PWR_SIZE)</label>
-          <input type="text" id="cfg_pwr_size" placeholder="130mm*95mm" />
+
+        <!-- PWR_SIZE: 全行內 -->
+        <div class="form-group" style="flex-direction:row;align-items:center;flex-wrap:wrap;gap:6px;">
+          <label style="margin-bottom:0;flex-shrink:0;white-space:nowrap;">PWR Board</label>
+          <input type="number" id="cfg_pwr_a" placeholder="130" step="0.1" style="width:58px;" />
+          <span style="font-size:11px;">mm ×</span>
+          <input type="number" id="cfg_pwr_b" placeholder="95" step="0.1" style="width:58px;" />
+          <span style="font-size:11px;">mm</span>
         </div>
-        <div class="form-group">
-          <label>Base 厚度 (BASE_THICKNESS)</label>
-          <input type="text" id="cfg_base_thickness" placeholder="7mm" />
+
+        <!-- BASE_THICKNESS: 全行內 -->
+        <div class="form-group" style="flex-direction:row;align-items:center;flex-wrap:wrap;gap:6px;">
+          <label style="margin-bottom:0;flex-shrink:0;white-space:nowrap;">Base 厚度</label>
+          <input type="number" id="cfg_base_t" placeholder="7" step="0.1" style="width:68px;" />
+          <span style="font-size:11px;">mm</span>
         </div>
-        <div class="form-group">
-          <label>Fin 厚度 (FIN_THICKNESS)</label>
-          <input type="text" id="cfg_fin_thickness" placeholder="1.2mm" />
+
+        <!-- FIN_THICKNESS: 全行內 -->
+        <div class="form-group" style="flex-direction:row;align-items:center;flex-wrap:wrap;gap:6px;">
+          <label style="margin-bottom:0;flex-shrink:0;white-space:nowrap;">Fin 厚度</label>
+          <input type="number" id="cfg_fin_t" placeholder="1.2" step="0.1" style="width:68px;" />
+          <span style="font-size:11px;">mm</span>
         </div>
-        <div class="form-group">
-          <label>Fin 高度 + 數量 (FIN_HEIGHT)</label>
-          <input type="text" id="cfg_fin_height" placeholder="61mm(H), 22fin" />
+
+        <!-- FIN_HEIGHT: 全行內，高度+數量 -->
+        <div class="form-group" style="flex-direction:row;align-items:center;flex-wrap:wrap;gap:6px;">
+          <label style="margin-bottom:0;flex-shrink:0;white-space:nowrap;">Fin 高度 + 數量</label>
+          <input type="number" id="cfg_fin_h" placeholder="61" step="0.1" style="width:58px;" />
+          <span style="font-size:11px;">mm</span>
+          <input type="number" id="cfg_fin_count" placeholder="22" step="1" style="width:52px;" />
+          <span style="font-size:11px;">fin</span>
         </div>
-        <div class="form-group">
-          <label>Fin Pitch (FIN_PITCH)</label>
-          <input type="text" id="cfg_fin_pitch" placeholder="12.8mm" />
+
+        <!-- FIN_PITCH: 全行內 -->
+        <div class="form-group" style="flex-direction:row;align-items:center;flex-wrap:wrap;gap:6px;">
+          <label style="margin-bottom:0;flex-shrink:0;white-space:nowrap;">Fin Pitch</label>
+          <input type="number" id="cfg_fin_p" placeholder="12.8" step="0.1" style="width:68px;" />
+          <span style="font-size:11px;">mm</span>
         </div>
+
       </div>
     </div>
   </div>
@@ -901,14 +938,40 @@ function getConfig() {
     backoff_db:       v('cfg_backoff_db'),
     pd_condition:     v('cfg_pd_condition'),
     // Exploded View (Page 3)
-    cavity_size:      v('cfg_cavity_size'),
+    cavity_size: (() => {
+      const l = document.getElementById('cfg_cavity_l')?.value?.trim();
+      const w = document.getElementById('cfg_cavity_w')?.value?.trim();
+      const h = document.getElementById('cfg_cavity_h')?.value?.trim();
+      return (l||'?') + 'mm*' + (w||'?') + 'mm*' + (h||'?') + 'mm';
+    })(),
     hp_count:         v('cfg_hp_count'),
-    digital_rf_size:  v('cfg_digital_rf_size'),
-    pwr_size:         v('cfg_pwr_size'),
-    base_thickness:   v('cfg_base_thickness'),
-    fin_thickness:    v('cfg_fin_thickness'),
-    fin_height:       v('cfg_fin_height'),
-    fin_pitch:        v('cfg_fin_pitch'),
+    digital_rf_size: (() => {
+      const a = document.getElementById('cfg_dr_a')?.value?.trim();
+      const b = document.getElementById('cfg_dr_b')?.value?.trim();
+      return (a||'?') + 'mm*' + (b||'?') + 'mm';
+    })(),
+    pwr_size: (() => {
+      const a = document.getElementById('cfg_pwr_a')?.value?.trim();
+      const b = document.getElementById('cfg_pwr_b')?.value?.trim();
+      return (a||'?') + 'mm*' + (b||'?') + 'mm';
+    })(),
+    base_thickness: (() => {
+      const t = document.getElementById('cfg_base_t')?.value?.trim();
+      return t ? t + 'mm' : '?';
+    })(),
+    fin_thickness: (() => {
+      const t = document.getElementById('cfg_fin_t')?.value?.trim();
+      return t ? t + 'mm' : '?';
+    })(),
+    fin_height: (() => {
+      const h = document.getElementById('cfg_fin_h')?.value?.trim();
+      const c = document.getElementById('cfg_fin_count')?.value?.trim();
+      return (h||'?') + 'mm(H), ' + (c||'?') + 'fin';
+    })(),
+    fin_pitch: (() => {
+      const p = document.getElementById('cfg_fin_p')?.value?.trim();
+      return p ? p + 'mm' : '?';
+    })(),
   };
 }
 
@@ -1725,9 +1788,9 @@ function addExplodedViewSlide(cfg) {
   // ── Spec: Heat pipe ──
   const hpCount = cfg.hp_count || '?';
   slide.addText([
-    { text: 'Heat pipe:', options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: '\n' + hpCount, options: { fontFace: F, color: RED, fontSize: 10 } },
-    { text: ' pcs D6 powder HP---FPGA', options: { fontFace: F, color: BLK, fontSize: 10 } }
+    { text: 'Heat pipe: ', options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: hpCount, options: { fontFace: F, color: RED, fontSize: 10 } },
+    { text: ' pcs D6 powder HP---FPGA', options: { fontFace: F, color: BLK, fontSize: 10, bold: true } }
   ], { x: 10.214, y: 4.1216, w: 2.6136, h: 0.5049, valign: 'top' });
 
   // ── Spec: Board sizes ──
