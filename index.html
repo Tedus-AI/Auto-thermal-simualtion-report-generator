@@ -1798,15 +1798,23 @@ function addExplodedViewSlide(cfg) {
     fill: { type: 'none' }, line: { type: 'none' }
   });
 
-  // ── Spec: Board sizes ──
+  // ── Spec: Board sizes (ID=69) ──
+  // 2 段純文字，完全沒有 <a:pPr> / bullet
+  // Para1 含語系切換空格：run間 "Digital/B" + " " + "+" + " " + "RF/B:" + [RED]
   const drSize  = cfg.digital_rf_size || '?';
   const pwrSize = cfg.pwr_size        || '?';
   slide.addText([
-    { text: 'Digital/B + RF/B: ', options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: drSize,               options: { fontFace: F, color: RED,  fontSize: 10 } },
-    { text: '\nPWR/B: ',          options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: pwrSize,              options: { fontFace: F, color: RED,  fontSize: 10 } }
-  ], { x: 3.6127, y: 6.9263, w: 2.5350, h: 0.3366, valign: 'top' });
+    // Para 1：Digital/B + RF/B: [RED]（語系切換空格保留為獨立 run）
+    { text: 'Digital/B',   options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: ' ',           options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: '+',           options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: ' ',           options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: 'RF/B:',       options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: drSize + '\n', options: { fontFace: F, color: RED,  fontSize: 10 } },
+    // Para 2：PWR/B: [RED]
+    { text: 'PWR/B:',      options: { fontFace: F, color: BLK, fontSize: 10 } },
+    { text: pwrSize,       options: { fontFace: F, color: RED,  fontSize: 10 } }
+  ], { x: 3.6127, y: 6.9263, w: 2.5350, h: 0.3366, valign: 'middle' });
 
   // ── Spec: Base / Fin (ID=7) ──
   // 10 段落：黑色固定文字 + 紅色變數同段，bullet 段落含 hanging indent
