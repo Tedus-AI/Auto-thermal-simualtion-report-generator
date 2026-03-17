@@ -1815,20 +1815,21 @@ function addExplodedViewSlide(cfg) {
   const finH  = cfg.fin_height     || '?';
   const finP  = cfg.fin_pitch      || '?';
   const BLT   = { code: '2022', indent: 13.5, marginPt: 13.5 }; // • bullet
+  const NONE  = false; // <a:buNone/> — 明確關閉 bullet，防止繼承
   slide.addText([
-    // Para 1: Base:（無 bullet）
-    { text: 'Base:\n',        options: { fontFace: F, color: BLK, fontSize: 10 } },
+    // Para 1: Base:（明確 buNone）
+    { text: 'Base:\n',        options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } },
     // Para 2: • thickness: [RED]（同段兩 run）
     { text: 'thickness: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
     { text: baseT + '\n',     options: { fontFace: F, color: RED,  fontSize: 10 } },
     // Para 3: • Al die-casting...（無 ea）
     { text: 'Al die-casting, Alloy (K=150W/mK)\n', options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
-    // Para 4: 空白行
-    { text: '\n',             options: { fontFace: F, color: BLK, fontSize: 10 } },
-    // Para 5: Fin:（無 bullet）
-    { text: 'Fin:\n',         options: { fontFace: F, color: BLK, fontSize: 10 } },
-    // Para 6: Bottom case-（注意尾部有空格）
-    { text: 'Bottom case- \n', options: { fontFace: F, color: BLK, fontSize: 10 } },
+    // Para 4: 空白行（明確 buNone，防止繼承上方 bullet）
+    { text: '\n',             options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } },
+    // Para 5: Fin:（明確 buNone）
+    { text: 'Fin:\n',         options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } },
+    // Para 6: Bottom case-（明確 buNone，尾部有空格）
+    { text: 'Bottom case- \n', options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } },
     // Para 7: • thickness: [RED]（同段兩 run）
     { text: 'thickness: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
     { text: finT + '\n',      options: { fontFace: F, color: RED,  fontSize: 10 } },
@@ -1838,8 +1839,8 @@ function addExplodedViewSlide(cfg) {
     // Para 9: • Fin pitch: [RED]（同段兩 run）
     { text: 'Fin pitch: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
     { text: finP + '\n',      options: { fontFace: F, color: RED,  fontSize: 10 } },
-    // Para 10: 尾部空白行
-    { text: '',               options: { fontFace: F, color: BLK, fontSize: 10 } }
+    // Para 10: 尾部空白行（明確 buNone）
+    { text: '',               options: { fontFace: F, color: BLK, fontSize: 10, bullet: NONE } }
   ], { x: 6.7991, y: 5.3179, w: 2.7373, h: 1.6829, valign: 'middle' });
 
   // ── Connector lines (fixed) ──
