@@ -1808,25 +1808,39 @@ function addExplodedViewSlide(cfg) {
     { text: pwrSize,              options: { fontFace: F, color: RED,  fontSize: 10 } }
   ], { x: 3.6127, y: 6.9263, w: 2.5350, h: 0.3366, valign: 'top' });
 
-  // ── Spec: Base / Fin ──
+  // ── Spec: Base / Fin (ID=7) ──
+  // 10 段落：黑色固定文字 + 紅色變數同段，bullet 段落含 hanging indent
   const baseT = cfg.base_thickness || '?';
   const finT  = cfg.fin_thickness  || '?';
   const finH  = cfg.fin_height     || '?';
   const finP  = cfg.fin_pitch      || '?';
+  const BLT   = { code: '2022', indent: 13.5, marginPt: 13.5 }; // • bullet
   slide.addText([
-    { text: 'Base:',                          options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: '\n• thickness: ',                options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: baseT,                            options: { fontFace: F, color: RED,  fontSize: 10 } },
-    { text: '\n• Al die-casting, Alloy (K=150W/mK)', options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: '\nFin:',                         options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: '\nBottom case-',                 options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: '\n• thickness: ',               options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: finT,                             options: { fontFace: F, color: RED,  fontSize: 10 } },
-    { text: '\n• Height: ',                   options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: finH,                             options: { fontFace: F, color: RED,  fontSize: 10 } },
-    { text: '\n• Fin pitch: ',                options: { fontFace: F, color: BLK, fontSize: 10 } },
-    { text: finP,                             options: { fontFace: F, color: RED,  fontSize: 10 } }
-  ], { x: 6.7991, y: 5.3179, w: 2.7373, h: 1.6829, valign: 'top' });
+    // Para 1: Base:（無 bullet）
+    { text: 'Base:\n',        options: { fontFace: F, color: BLK, fontSize: 10 } },
+    // Para 2: • thickness: [RED]（同段兩 run）
+    { text: 'thickness: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
+    { text: baseT + '\n',     options: { fontFace: F, color: RED,  fontSize: 10 } },
+    // Para 3: • Al die-casting...（無 ea）
+    { text: 'Al die-casting, Alloy (K=150W/mK)\n', options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
+    // Para 4: 空白行
+    { text: '\n',             options: { fontFace: F, color: BLK, fontSize: 10 } },
+    // Para 5: Fin:（無 bullet）
+    { text: 'Fin:\n',         options: { fontFace: F, color: BLK, fontSize: 10 } },
+    // Para 6: Bottom case-（注意尾部有空格）
+    { text: 'Bottom case- \n', options: { fontFace: F, color: BLK, fontSize: 10 } },
+    // Para 7: • thickness: [RED]（同段兩 run）
+    { text: 'thickness: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
+    { text: finT + '\n',      options: { fontFace: F, color: RED,  fontSize: 10 } },
+    // Para 8: • Height: [RED]（同段兩 run）
+    { text: 'Height: ',       options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
+    { text: finH + '\n',      options: { fontFace: F, color: RED,  fontSize: 10 } },
+    // Para 9: • Fin pitch: [RED]（同段兩 run）
+    { text: 'Fin pitch: ',    options: { fontFace: F, color: BLK, fontSize: 10, bullet: BLT } },
+    { text: finP + '\n',      options: { fontFace: F, color: RED,  fontSize: 10 } },
+    // Para 10: 尾部空白行
+    { text: '',               options: { fontFace: F, color: BLK, fontSize: 10 } }
+  ], { x: 6.7991, y: 5.3179, w: 2.7373, h: 1.6829, valign: 'middle' });
 
   // ── Connector lines (fixed) ──
   // ID=60: Cavity label callout (curvedConnector3, rot=90°)
