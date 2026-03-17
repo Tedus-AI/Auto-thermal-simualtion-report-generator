@@ -1824,10 +1824,11 @@ function addExplodedViewSlide(cfg) {
   ], { x: 6.7991, y: 5.3179, w: 2.7373, h: 1.6829, valign: 'top' });
 
   // ── Connector lines (fixed) ──
-  // ID=60: Cavity label callout
-  slide.addShape('curvedConnector2', {
-    x: 0.749, y: 3.620, w: 1.662, h: 0.270,
-    line: { color: '000000', endArrowType: 'triangle', width: 1 }
+  // ID=60: Cavity label callout (curvedConnector3, rot=90°)
+  slide.addShape('curvedConnector3', {
+    x: 0.7489, y: 3.6200, w: 1.6619, h: 0.2699,
+    rotate: 90,
+    line: { color: '000000', endArrowType: 'triangle' }
   });
   // ID=26: board callout 上
   slide.addShape('curvedConnector2', {
